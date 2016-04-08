@@ -48,7 +48,7 @@ flipPieces board col pos = flippedPieces
   where allPieces = (findPieces board col pos directions)
         filteredPieces = (filter (\list -> not (null list) && snd (last list) == col) allPieces) --eliminate directions which don't have the same colour at the end
         piecesToFlip = map (takeWhile (\piece -> (snd piece) /= col)) filteredPieces
-        flippedPieces =map (\list -> map (changeColour col) list) piecesToFlip
+        flippedPieces =map (\list -> map (changeColour col) list) piecesToFlip --flip
 
 -- | Finds pieces to flip in each direction
 findPieces :: Board -> Col -> Position -> [Position] -> [[Piece]]

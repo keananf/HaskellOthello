@@ -25,7 +25,7 @@ main :: IO ()
 main = do tile <- loadBMP "../tile.bmp"
           blackPiece <- loadBMP "../black-piece.bmp"
           whitePiece <- loadBMP "../white-piece.bmp"
-          play (InWindow "Othello" (640, 480) (10, 10)) black 10
+          play (InWindow "Othello" (800, 600) (10, 10)) black 10
             initWorld
             (drawWorld (tile, blackPiece, whitePiece)) -- in Draw.hs
             handleInput -- in Input.hs
