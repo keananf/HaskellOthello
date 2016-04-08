@@ -5,7 +5,7 @@ import Data.List
 import Game
 
 directions :: [Position]
-directions =  [(x,y )| x <- [-1..1], y <- [-1..1]]
+directions =  delete (0,0) [(x,y )| x <- [-1..1], y <- [-1..1]]
 
 changeColour :: Col -> Piece -> Piece
 changeColour col (pos,_) = (pos, col)
@@ -24,11 +24,6 @@ makeMove board col pos | not (isOccupied board pos) && (inRange board pos) && le
                    | otherwise = Nothing
   where pieces = flatten (flipPieces board col pos)
         newBoard = updatePieces board pieces pos col
-        --newWorld = changeTurn world
-
-changeTurn :: World -> World
-changeTurn world = world {turn = (other col)}
-  where col = turn world
 
 updatePieces :: Board -> [Piece] -> Position -> Col -> Board
 updatePieces board newPieces pos col = board {pieces = allPieces}
@@ -46,9 +41,15 @@ flatten (p:ps) = p ++ (flatten ps)
 flipPieces :: Board -> Col -> Position -> [[Piece]]
 flipPieces board col pos = flippedPieces
   where allPieces = (findPieces board col pos directions)
-        filteredPieces = (filter (\list -> not (null list) && snd (last list) == col) allPieces) --eliminate directions which don't have the same colour at the end
+        --eliminate directions which don't have the same colour at the end
+        filteredPieces = filterList allPieces 
         piecesToFlip = map (takeWhile (\piece -> (snd piece) /= col)) filteredPieces
         flippedPieces =map (\list -> map (changeColour col) list) piecesToFlip --flip
+
+        filterList :: [[Piece]] -> [[Piece]]
+        filterList allPieces = filter (\list -> not (null list) && containsCol list col) allPieces
+        containsCol :: [Piece] -> Col ->Bool
+        containsCol list col = (any (\elem -> (snd elem) == col) list)
 
 -- | Finds pieces to flip in each direction
 findPieces :: Board -> Col -> Position -> [Position] -> [[Piece]]

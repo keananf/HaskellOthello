@@ -19,8 +19,8 @@ drawWorld tiles world = scale 0.5 0.5 picture
 drawScore :: Board -> [Picture]
 drawScore board = map (\pic -> scale 0.5 0.5 (color white pic)) pics 
   where scores = checkScore board
-        score1 = translate (1750) (800) (text ("Black:" ++ show(fst scores)))
-        score2 = translate (1750) (300)(text ("White:" ++ show(snd scores)))
+        score1 = translate (1750) (800) (text ("Black: " ++ show(fst scores)))
+        score2 = translate (1750) (300)(text ("White: " ++ show(snd scores)))
         pics = (score1:[score2])
 
 -- | Retrieves the composite picture of each individual picture representing
