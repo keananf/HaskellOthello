@@ -1,6 +1,7 @@
 module AI where
 
 import Board
+import Game
 
 data GameTree = GameTree { game_board :: Board,
                            game_turn :: Col,
