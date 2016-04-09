@@ -30,4 +30,3 @@ main = do tile <- loadBMP "../tile.bmp"
             (drawWorld (tile, blackPiece, whitePiece)) -- in Draw.hs
             handleInput -- in Input.hs
             updateWorld -- in AI.hs
-

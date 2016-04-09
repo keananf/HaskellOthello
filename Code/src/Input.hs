@@ -21,17 +21,21 @@ handleInput (EventMotion (x, y)) world
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
   | inRange board (x', y') = case makeMove board col (x',y') of
       (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
-      (Nothing) -> world
+      (Nothing) -> world --invalid move. Don't change turns
   | otherwise = undo world --click outside the board undoes a move
   where (x',y') = convertCoords x y
         board = gameboard world
         col = turn world
         newCol = other col
 
-handleInput (EventKey (Char k) Down _ _) world
-    = trace ("Key " ++ show k ++ " down") world
-handleInput (EventKey (Char k) Up _ _) world
-    = trace ("Key " ++ show k ++ " up") world
+handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
+    = trace ("Space key down") world
+handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
+    = world {gameboard = newBoard, oldworld = world, turn = newCol}
+    where board = gameboard world
+          numPasses = passes board
+          newBoard = board {passes = numPasses + 1}
+          newCol = other (turn world)
 handleInput e world = world
 
 -- | convert the coordinates (with original origin at the center)

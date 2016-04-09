@@ -26,7 +26,7 @@ makeMove board col pos | not (isOccupied board pos) && (inRange board pos) && le
         newBoard = updatePieces board pieces pos col
 
 updatePieces :: Board -> [Piece] -> Position -> Col -> Board
-updatePieces board newPieces pos col = board {pieces = allPieces}
+updatePieces board newPieces pos col = board {pieces = allPieces, passes = 0}
   where otherPieces = deleteFirstsBy (\x y -> ((fst x) == (fst y))) (pieces board) (newPieces)
         newPiece = (pos, col)
         allPieces = newPiece:newPieces ++ otherPieces
