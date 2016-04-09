@@ -1,7 +1,7 @@
 module Main where
 
 import Graphics.Gloss
-
+import System.Environment
 import Board
 import Draw
 import Input
@@ -25,8 +25,9 @@ main :: IO ()
 main = do tile <- loadBMP "../tile.bmp"
           blackPiece <- loadBMP "../black-piece.bmp"
           whitePiece <- loadBMP "../white-piece.bmp"
+          args <- getArgs
           play (InWindow "Othello" (800, 600) (10, 10)) black 10
-            initWorld
+            (initWorld args)
             (drawWorld (tile, blackPiece, whitePiece)) -- in Draw.hs
             handleInput -- in Input.hs
             updateWorld -- in AI.hs

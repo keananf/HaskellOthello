@@ -13,6 +13,7 @@ type Piece = (Position, Col)
 
 data Board = Board { size :: Int,
                      passes :: Int,
+                     reversi :: Bool,
                      pieces :: [Piece]
                    }
   deriving Show
@@ -26,18 +27,20 @@ data Board = Board { size :: Int,
 -- most recent moves were).
 data World = World { gameboard :: Board,
                      oldworld :: World,
+                     args :: [String],
                      turn :: Col }
 
-
--- Default board is 8x8, neither played has passed, with 4 initial pieces 
-initBoard :: Board
-initBoard = Board 8 0 [((3,4), Black), ((4,4), White),
+initBoard :: Bool -> Board
+initBoard reversi = Board 8 0 reversi [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
-initWorld :: World
-initWorld = World board world Black
-  where board = initBoard
-        world = initWorld
+initWorld :: [String] -> World
+initWorld args = World board world args Black
+  where reversi :: [String] -> Bool
+        reversi arguments | length arguments == 1 && head args == "True" = True
+                          | otherwise = False
+        board = initBoard (reversi args)
+        world = initWorld args
 
 -----------------------------------------------------------------
 -- Check the current score

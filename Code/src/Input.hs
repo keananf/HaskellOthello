@@ -33,7 +33,7 @@ handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
     = trace ("Space key down") world
 handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
     | not (gameOver board) = world {gameboard = newBoard, oldworld = world, turn = newCol}
-    | otherwise = initWorld --Reset game when gameover and space pressed
+    | otherwise = initWorld (args world)--Reset game when gameover and space pressed
     where board = gameboard world
           numPasses = passes board
           newBoard = board {passes = numPasses + 1}
