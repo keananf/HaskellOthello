@@ -13,7 +13,13 @@ drawWorld tiles world = scale 0.5 0.5 picture
   where board = gameboard world
         boardTiles = (getTiles board tiles)
         score = drawScore board
-        picture = translate (-350.0) (-350.0) (pictures(score ++ boardTiles))
+        turn = drawTurn world
+        picture = translate (-350.0) (-350.0) (pictures(turn:(score ++ boardTiles)))
+
+drawTurn :: World -> Picture
+drawTurn world = scale 0.5 0.5 (color white pic)
+  where pic = translate 375 (-300) (text ("Turn: " ++ show(col)))
+        col = turn world
 
 -- | Prints the Score of each colour
 drawScore :: Board -> [Picture]

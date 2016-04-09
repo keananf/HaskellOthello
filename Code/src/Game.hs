@@ -22,9 +22,10 @@ data Board = Board { size :: Int,
 -- names, timers, information about rule variants, etc)
 --
 -- Feel free to extend this, and 'Board' above with anything you think
--- will be useful (information for the AI, for example, such as where the
+-- will be useful (infomation for the AI, for example, such as where the
 -- most recent moves were).
 data World = World { gameboard :: Board,
+                     oldboard :: Board,
                      turn :: Col }
 
 
@@ -34,7 +35,8 @@ initBoard = Board 8 0 [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
 initWorld :: World
-initWorld = World initBoard Black
+initWorld = World board board Black
+  where board = initBoard
 
 -----------------------------------------------------------------
 -- Check the current score
