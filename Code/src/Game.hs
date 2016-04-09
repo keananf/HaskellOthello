@@ -25,7 +25,7 @@ data Board = Board { size :: Int,
 -- will be useful (infomation for the AI, for example, such as where the
 -- most recent moves were).
 data World = World { gameboard :: Board,
-                     oldboard :: Board,
+                     oldworld :: World,
                      turn :: Col }
 
 
@@ -35,8 +35,9 @@ initBoard = Board 8 0 [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
 initWorld :: World
-initWorld = World board board Black
+initWorld = World board world Black
   where board = initBoard
+        world = initWorld
 
 -----------------------------------------------------------------
 -- Check the current score
@@ -61,3 +62,6 @@ gameOver board | (passes board) == 2 = True
                | length (pieces board) == (size board) * (size board) = True
                | otherwise = False
 
+-- | Rolls back the world to the previous state
+undo :: World -> World
+undo world = oldworld world

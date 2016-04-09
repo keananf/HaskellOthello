@@ -13,15 +13,16 @@ drawWorld tiles world = scale 0.5 0.5 picture
   where board = gameboard world
         boardTiles = (getTiles board tiles)
         score = drawScore board
-        turn = drawTurn world
-        picture = translate (-350.0) (-350.0) (pictures(turn:(score ++ boardTiles)))
+        turnImg = drawTurn world
+        picture = translate (-350.0) (-350.0) (pictures(turnImg:(score ++ boardTiles)))
 
+-- | Display whose turn it is at the bottom of the board
 drawTurn :: World -> Picture
 drawTurn world = scale 0.5 0.5 (color white pic)
   where pic = translate 375 (-300) (text ("Turn: " ++ show(col)))
         col = turn world
 
--- | Prints the Score of each colour
+-- | Prints the Score of each colour to the right of the board
 drawScore :: Board -> [Picture]
 drawScore board = map (\pic -> scale 0.5 0.5 (color white pic)) pics 
   where scores = checkScore board

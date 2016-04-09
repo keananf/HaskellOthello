@@ -18,10 +18,11 @@ handleInput :: Event -> World -> World
 handleInput (EventMotion (x, y)) world
     = trace ("Mouse moved to: " ++ show (x',y')) world
     where (x',y') = convertCoords x y
-handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world =
-  case makeMove board col (x',y') of
-    (Just newBoard') -> world {gameboard = newBoard', turn = newCol}
-    (Nothing) -> world
+handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
+  | inRange board (x', y') = case makeMove board col (x',y') of
+      (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
+      (Nothing) -> world
+  | otherwise = undo world --click outside the board undoes a move
   where (x',y') = convertCoords x y
         board = gameboard world
         col = turn world
