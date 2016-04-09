@@ -30,17 +30,21 @@ data World = World { gameboard :: Board,
                      args :: [String],
                      turn :: Col }
 
-initBoard :: Bool -> Board
-initBoard reversi = Board 8 0 reversi [((3,4), Black), ((4,4), White),
+initBoard :: Bool -> Int -> Board
+initBoard reversi size = Board size 0 reversi [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
 initWorld :: [String] -> World
 initWorld args = World board world args Black
-  where reversi :: [String] -> Bool
-        reversi arguments | length arguments == 1 && head args == "True" = True
-                          | otherwise = False
-        board = initBoard (reversi args)
+  where board = initBoard (reversi args) (size args)
         world = initWorld args
+        reversi :: [String] -> Bool
+        reversi arguments | length arguments >= 1 && any (== "True") args = True
+                          | otherwise = False
+        size :: [String] -> Int
+        size arguments | length arguments >= 1 = read (head arguments) :: Int
+                          | otherwise = 8 --default board size
+        
 
 -----------------------------------------------------------------
 -- Check the current score

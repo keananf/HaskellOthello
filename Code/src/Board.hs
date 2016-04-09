@@ -19,13 +19,15 @@ other White = Black
 -- (e.g. outside the range of the board, there is a piece already there,
 -- or the move does not flip any opposing pieces)
 makeMove :: Board -> Col -> Position -> Maybe Board
-makeMove board col pos |
-  not (isOccupied board pos) && (inRange board pos)
-  && ((reversi board && length (pieces board) < 8) --dont need to flip
-      || length flippedPieces > 0) = Just newBoard
+makeMove board col pos | validMove = Just newBoard
                    | otherwise = Nothing
   where flippedPieces = flatten (flipPieces board col pos)
         newBoard = updatePieces board flippedPieces pos col
+ 
+        validMove :: Bool
+        validMove = not (isOccupied board pos) && (inRange board pos)
+          && ((reversi board && length (pieces board) < 8)
+              || length flippedPieces > 0) --if not reversi, have to flip
 
 updatePieces :: Board -> [Piece] -> Position -> Col -> Board
 updatePieces board newPieces pos col = board {pieces = allPieces, passes = 0}
