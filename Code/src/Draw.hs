@@ -9,12 +9,22 @@ type Types = (Picture, Picture, Picture)
 -- This extracts the Board from the world state and draws it
 -- as a grid plus pieces.
 drawWorld :: Types -> World -> Picture
-drawWorld tiles world = scale 0.5 0.5 picture 
+drawWorld tiles world | not (gameOver board) = scale 0.5 0.5 picture
+                      | otherwise = scale 0.5 0.5 drawGameOver
   where board = gameboard world
         boardTiles = (getTiles board tiles)
         score = drawScore board
         turnImg = drawTurn world
         picture = translate (-350.0) (-350.0) (pictures(turnImg:(score ++ boardTiles)))
+
+-- | draws the gameover screen
+drawGameOver :: Picture
+drawGameOver = pics
+  where background = (rectangleSolid 800 800)
+        gameOverMsg :: Picture
+        gameOverMsg = color white (translate (-350) (-150) (text ("Game Over.")))
+        continueMsg = color white (translate (-850) (-350) (text ("Press Space to Start Again")))
+        pics = pictures (background:[(scale 0.5 0.5 gameOverMsg), (scale 0.5 0.5 continueMsg)])
 
 -- | Display whose turn it is at the bottom of the board
 drawTurn :: World -> Picture
