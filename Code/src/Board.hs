@@ -95,7 +95,8 @@ allPositions board =  [(x,y) | x <- [0..len-1], y <- [0..len-1]]
 -- | detect for each position on the board which ones result in valid moves
 detectMoves :: Board -> Col -> [Position] ->[Position]
 detectMoves board col [] = []
-detectMoves board col (x:xs) | length flippedPieces >= 1 = [x] ++ positions
+detectMoves board col (x:xs) | (reversi board && length (pieces board) < 8) = x:xs
+                             | length flippedPieces >= 1 = [x] ++ positions
                              | otherwise = positions
   where flippedPieces = flipPieces board col x
         positions = detectMoves board col xs

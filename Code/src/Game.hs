@@ -27,6 +27,7 @@ data Board = Board { size :: Int,
 -- most recent moves were).
 data World = World { gameboard :: Board,
                      oldworld :: World, --allows for undo
+                     hints :: Bool, --if hints are on or not
                      args :: [String],
                      turn :: Col }
 
@@ -35,8 +36,9 @@ initBoard reversi size = Board size 0 reversi [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
 initWorld :: [String] -> World
-initWorld args = World board world args Black
+initWorld args = World board world hints args Black
   where board = initBoard (isReversi args) (checkSize args)
+        hints = hasHints args
         world = initWorld args
 
 
@@ -45,16 +47,18 @@ initWorld args = World board world args Black
 -- | don't need to result in a flip.
 isReversi :: [String] -> Bool
 isReversi arguments | length arguments >= 1 && any (== "reversi") arguments = True
-                  | otherwise = False
+                    | otherwise = False
 
 
 -- | Read first command line argument for board size, if it is present
 -- | otherwise return the default of 8
 checkSize :: [String] -> Int
 checkSize arguments | length arguments >= 1 = read (head arguments) :: Int
-               | otherwise = 8 --default board size
+                    | otherwise = 8 --default board size
 
-
+hasHints :: [String] -> Bool
+hasHints arguments | length arguments >= 1 && any (=="hints") arguments = True
+                   | otherwise = False
 -----------------------------------------------------------------
 -- Check the current score
 -- Returns a pair of the number of black pieces, and the number of
