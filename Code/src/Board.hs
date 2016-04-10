@@ -21,13 +21,16 @@ other White = Black
 makeMove :: Board -> Col -> Position -> Maybe Board
 makeMove board col pos | validMove = Just newBoard
                    | otherwise = Nothing
-  where flippedPieces = flatten (flipPieces board col pos)
+  where flippedPieces = (flipPieces board col pos)
         newBoard = updatePieces board flippedPieces pos col
- 
+
+        -- | Detects a valid move given the rule set
         validMove :: Bool
-        validMove = not (isOccupied board pos) && (inRange board pos)
-          && ((reversi board && length (pieces board) < 8)
-              || length flippedPieces > 0) --if not reversi, have to flip
+        validMove = not (isOccupied board pos) && (inRange board pos) --in range and open space
+          && ((reversi board && length (pieces board) < 8) -- allow first 4 moves to not require flips
+              || length flippedPieces > 0) --if not reversi, have to flip for legal move
+
+
 
 updatePieces :: Board -> [Piece] -> Position -> Col -> Board
 updatePieces board newPieces pos col = board {pieces = allPieces, passes = 0}
@@ -35,34 +38,26 @@ updatePieces board newPieces pos col = board {pieces = allPieces, passes = 0}
         newPiece = (pos, col)
         allPieces = newPiece:newPieces ++ otherPieces
 
--- | Flatten 2D list of pieces which results from flipPieces and FindPieces
--- | It is 2D to represent all the pieces to flip in all directions
-flatten :: [[Piece]] -> [Piece]
-flatten [] = []
-flatten (p:ps) = p ++ (flatten ps)
 
 -- | Flip the colours of all pieces returned from findPieces
-flipPieces :: Board -> Col -> Position -> [[Piece]]
+flipPieces :: Board -> Col -> Position -> [Piece]
 flipPieces board col pos = flippedPieces
   where allPieces = (findPieces board col pos directions)
-        --eliminate directions which don't have the same colour at the end
-        filteredPieces = filterList allPieces 
-        piecesToFlip = map (takeWhile (\piece -> (snd piece) /= col)) filteredPieces
-        flippedPieces =map (\list -> map (changeColour col) list) piecesToFlip --flip
+        flippedPieces = map (changeColour col) allPieces --flip
 
-        filterList :: [[Piece]] -> [[Piece]]
-        filterList allPieces = filter (\list -> not (null list) && containsCol list col) allPieces
-        containsCol :: [Piece] -> Col ->Bool
-        containsCol list col = (any (\elem -> (snd elem) == col) list)
 
--- | Finds pieces to flip in each direction
-findPieces :: Board -> Col -> Position -> [Position] -> [[Piece]]
+-- | Finds all pieces to flip in all directions, if any
+findPieces :: Board -> Col -> Position -> [Position] -> [Piece]
 findPieces board col pos [] = []
-findPieces board col pos (d:ds) = pieces:(findPieces board col pos ds)
+findPieces board col pos (d:ds) | containsCol pieces col = piecesToFlip ++ (findPieces board col pos ds)
+                                | otherwise = findPieces board col pos ds
   where maybePieces = searchDirection board pos d col --find infinite list of maybe pieces in d
         justPieces = takeWhile (isJust) maybePieces --get rid of all nothings
         pieces = map (fromJust) justPieces --all pieces in this direction
+        piecesToFlip = (takeWhile (\piece -> (snd piece) /= col)) pieces -- pieces to flip in this dir
 
+        containsCol :: [Piece] -> Col ->Bool
+        containsCol list col = (any (\elem -> (snd elem) == col) list)
 
 -- | Retrieves an infinite list of maybe pieces in this direction
 searchDirection :: Board -> Position -> Position -> Col -> [Maybe Piece]
@@ -77,6 +72,8 @@ findPiece board pos | length list == 1 = Just (head list)
                     | otherwise = Nothing
   where list = filter (\piece -> (fst piece) == pos) (pieces board)
 
+
+-----------------------------------------------------------------
 -- | Check if the space is occupied
 isOccupied :: Board -> Position -> Bool
 isOccupied board pos = any (== pos) positions
@@ -86,7 +83,8 @@ isOccupied board pos = any (== pos) positions
 inRange :: Board -> Position -> Bool
 inRange board (x,y) = x < len && x >= 0 && y < len && y >= 0
   where len = (size board)
------------------------------------------------------------------
+
+----------------------------------------------------------------
 
 -- An evaluation function for a minimax search. Given a board and a colour
 -- return an integer indicating how good the board is for that colour.
