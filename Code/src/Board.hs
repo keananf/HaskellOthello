@@ -31,7 +31,6 @@ makeMove board col pos | validMove = Just newBoard
               || length flippedPieces > 0) --if not reversi, have to flip for legal move
 
 
-
 updatePieces :: Board -> [Piece] -> Position -> Col -> Board
 updatePieces board newPieces pos col = board {pieces = allPieces, passes = 0}
   where otherPieces = deleteFirstsBy (\x y -> ((fst x) == (fst y))) (pieces board) (newPieces)
@@ -85,6 +84,25 @@ inRange board (x,y) = x < len && x >= 0 && y < len && y >= 0
   where len = (size board)
 
 ----------------------------------------------------------------
+--Following functions for checking which tiles are valid moves
+--to print hints
+
+-- | Function for generating a list of all positions
+allPositions :: Board -> [Position]
+allPositions board =  [(x,y) | x <- [0..len-1], y <- [0..len-1]]
+  where len = size board
+
+-- | detect for each position on the board which ones result in valid moves
+detectMoves :: Board -> Col -> [Position] ->[Position]
+detectMoves board col [] = []
+detectMoves board col (x:xs) | length flippedPieces >= 1 = [x] ++ positions
+                             | otherwise = positions
+  where flippedPieces = flipPieces board col x
+        positions = detectMoves board col xs
+
+-----------------------------------------------------------------
+
+
 
 -- An evaluation function for a minimax search. Given a board and a colour
 -- return an integer indicating how good the board is for that colour.

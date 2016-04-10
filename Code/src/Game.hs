@@ -44,7 +44,7 @@ initWorld args = World board world args Black
 -- | reversi rule set, that is, that the first two moves by each colour
 -- | don't need to result in a flip.
 isReversi :: [String] -> Bool
-isReversi arguments | length arguments >= 1 && any (== "True") arguments = True
+isReversi arguments | length arguments >= 1 && any (== "reversi") arguments = True
                   | otherwise = False
 
 
@@ -68,8 +68,7 @@ countPieces :: (Int, Int) -> [Col] -> (Int, Int)
 countPieces (x,y) [] = (x,y)
 countPieces (x,y) (z:zs) | Black == z = countPieces (x+1,y) zs
                          | otherwise = countPieces (x,y+1) zs
------------------------------------------------------------------
-
+----------------------------------------------------------------
 
 -- Return true if the game is complete (that is, either the board is
 -- full or there have been two consecutive passes)

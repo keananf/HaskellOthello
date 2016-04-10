@@ -4,7 +4,7 @@ import Graphics.Gloss
 import Board
 import Game
 
-type Types = (Picture, Picture, Picture)
+type Types = (Picture, Picture, Picture, Picture)
 
 -- This extracts the Board from the world state and draws it
 -- as a grid plus pieces.
@@ -12,7 +12,7 @@ drawWorld :: Types -> World -> Picture
 drawWorld tiles world | not (gameOver board) = scale 0.5 0.5 picture
                       | otherwise = scale 0.5 0.5 drawGameOver
   where board = gameboard world
-        boardTiles = (getTiles board tiles)
+        boardTiles = (getTiles board (turn world) tiles)
         score = drawScore board
         turnImg = drawTurn world
         picture = translate (-350.0) (-350.0) (pictures(turnImg:(score ++ boardTiles)))
@@ -42,19 +42,25 @@ drawScore board = map (\pic -> scale 0.5 0.5 (color white pic)) pics
 
 -- | Retrieves the composite picture of each individual picture representing
 -- | each tile
-getTiles :: Board -> Types -> [Picture]
-getTiles board types = [getTile board (x,y) types | x <- [0..len-1], y <- [0..len-1]]
+getTiles :: Board -> Col -> Types -> [Picture]
+getTiles board col types = [getTile col board (x,y) types | x <- [0..len-1], y <- [0..len-1]]
   where len = size board
 
 
 -- | Figure out each type of tile and return the Picture that needs to be printed
-getTile :: Board-> (Int,Int) -> Types -> Picture
-getTile board (x,y) (tile, blackPiece, whitePiece) = case (findPiece board (x,y)) of
+getTile :: Col -> Board-> (Int,Int) -> Types -> Picture
+getTile col board (x,y) (tile, blackPiece, whitePiece, movePiece) = case (findPiece board (x,y)) of
   (Just piece) -> translate x' y' (getColour (blackPiece, whitePiece) piece)
-  (Nothing) -> translate x' y' tile
+  (Nothing) -> translate x' y' (checkValidMove board col x y (tile, movePiece))
   where pos' = getOffset (x,y)
         x' = fromIntegral (fst pos')
         y' = fromIntegral (snd pos')
+
+checkValidMove :: Board -> Col -> Int -> Int -> (Picture,Picture) -> Picture
+checkValidMove board col x y (tile, moveTile)
+  | any (==(x,y)) potentialMoves = moveTile
+  | otherwise = tile
+  where potentialMoves = detectMoves board col (allPositions board)
 
 -- | if a space contains a piece, return the correct type of piece
 getColour :: (Picture, Picture) -> Piece ->Picture

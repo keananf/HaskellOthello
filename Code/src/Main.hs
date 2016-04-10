@@ -25,9 +25,10 @@ main :: IO ()
 main = do tile <- loadBMP "../tile.bmp"
           blackPiece <- loadBMP "../black-piece.bmp"
           whitePiece <- loadBMP "../white-piece.bmp"
+          movePiece <- loadBMP "../move.bmp"
           args <- getArgs
           play (InWindow "Othello" (800, 600) (10, 10)) black 10
             (initWorld args)
-            (drawWorld (tile, blackPiece, whitePiece)) -- in Draw.hs
+            (drawWorld (tile, blackPiece, whitePiece, movePiece)) -- in Draw.hs
             handleInput -- in Input.hs
             updateWorld -- in AI.hs
