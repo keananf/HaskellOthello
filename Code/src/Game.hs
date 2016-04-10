@@ -26,7 +26,7 @@ data Board = Board { size :: Int,
 -- will be useful (infomation for the AI, for example, such as where the
 -- most recent moves were).
 data World = World { gameboard :: Board,
-                     oldworld :: World,
+                     oldworld :: World, --allows for undo
                      args :: [String],
                      turn :: Col }
 
@@ -36,15 +36,24 @@ initBoard reversi size = Board size 0 reversi [((3,4), Black), ((4,4), White),
 
 initWorld :: [String] -> World
 initWorld args = World board world args Black
-  where board = initBoard (reversi args) (size args)
+  where board = initBoard (isReversi args) (checkSize args)
         world = initWorld args
-        reversi :: [String] -> Bool
-        reversi arguments | length arguments >= 1 && any (== "True") args = True
-                          | otherwise = False
-        size :: [String] -> Int
-        size arguments | length arguments >= 1 = read (head arguments) :: Int
-                          | otherwise = 8 --default board size
-        
+
+
+-- | Check to see if the user wishes to play the game with the
+-- | reversi rule set, that is, that the first two moves by each colour
+-- | don't need to result in a flip.
+isReversi :: [String] -> Bool
+isReversi arguments | length arguments >= 1 && any (== "True") arguments = True
+                  | otherwise = False
+
+
+-- | Read first command line argument for board size, if it is present
+-- | otherwise return the default of 8
+checkSize :: [String] -> Int
+checkSize arguments | length arguments >= 1 = read (head arguments) :: Int
+               | otherwise = 8 --default board size
+
 
 -----------------------------------------------------------------
 -- Check the current score

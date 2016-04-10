@@ -23,7 +23,7 @@ handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
       (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
       (Nothing) -> world --invalid move. Don't change turns
   | not (gameOver board) = undo world --click outside the board undoes a move
-  | otherwise = world
+  | otherwise = world --game is over, don't update world
   where (x',y') = convertCoords x y
         board = gameboard world
         col = turn world
