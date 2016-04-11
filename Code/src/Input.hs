@@ -38,6 +38,11 @@ handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
           numPasses = passes board
           newBoard = board {passes = numPasses + 1}
           newCol = other (turn world)
+
+handleInput (EventKey (SpecialKey KeyTab) Down _ _) world
+    = trace ("Tab key down") world
+handleInput (EventKey (SpecialKey KeyTab) Up _ _) world
+  = world {hints = (not (hints world))}
 handleInput e world = world
 
 -- | convert the coordinates (with original origin at the center)

@@ -1,5 +1,7 @@
 module Game where
 
+import Data.Char
+
 data Col = Black | White
   deriving (Show, Eq)
 
@@ -53,8 +55,9 @@ isReversi arguments | length arguments >= 1 && any (== "reversi") arguments = Tr
 -- | Read first command line argument for board size, if it is present
 -- | otherwise return the default of 8
 checkSize :: [String] -> Int
-checkSize arguments | length arguments >= 1 = read (head arguments) :: Int
+checkSize arguments | length nums >= 1 = read (head nums) :: Int
                     | otherwise = 8 --default board size
+                    where nums = filter (\arg -> all isDigit arg) arguments
 
 hasHints :: [String] -> Bool
 hasHints arguments | length arguments >= 1 && any (=="hints") arguments = True
