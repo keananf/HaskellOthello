@@ -85,7 +85,7 @@ inRange board (x,y) = x < len && x >= 0 && y < len && y >= 0
 
 ----------------------------------------------------------------
 --Following functions for checking which tiles are valid moves
---to print hints
+--to print hints, as well as for the AI to check which moves are valid
 
 -- | Function for generating a list of all positions
 allPositions :: Board -> [Position]

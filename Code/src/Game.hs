@@ -97,4 +97,5 @@ gameOver board | (passes board) == 2 = True
 
 -- | Rolls back the world to the previous state
 undo :: World -> World
-undo world = oldworld world
+undo world | ai world = oldworld (oldworld world)
+           | otherwise = oldworld world

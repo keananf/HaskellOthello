@@ -42,10 +42,10 @@ genAllMoves board col = detectMoves board col (allPositions board)
 -- traverse the game tree up to a certain depth, and pick the move which
 -- leads to the position with the best score for the player whose turn it
 -- is at the top of the game tree.
-getBestMove :: Int -- ^ Maximum search depth
+getBestMoveBadAI :: Int -- ^ Maximum search depth
                -> GameTree -- ^ Initial game tree
                -> (Position, GameTree)
-getBestMove i tree = head bestMove
+getBestMoveBadAI i tree = head bestMove
   where bestScore = evalLayer tree --tuple of pos and score associated with pos
         bestMove = filter (\move -> (fst move) == (fst bestScore)) (nextMoves tree)
         eval :: GameTree -> Int
@@ -59,6 +59,25 @@ getBestMove i tree = head bestMove
                 bestScore = maximum (map (snd) scores)
                 bestPos = filter (\move -> (snd move) == bestScore) scores
 
+getBestMoveGoodAI :: Int -- ^ Maximum search depth
+               -> GameTree -- ^ Initial game tree
+               -> (Position, GameTree)
+getBestMoveGoodAI i tree = head bestMove
+  where bestScore = evalLayer tree --tuple of pos and score associated with pos
+        bestMove = filter (\move -> (fst move) == (fst bestScore)) (nextMoves tree)
+        eval :: GameTree -> Int
+        eval tree = evaluate board col
+          where board = (game_board tree)
+                col = game_turn tree
+
+        evalLayer :: GameTree -> (Position, Int)
+        evalLayer tree = (head bestPos)
+          where scores = map (\(pos,gametree) -> (pos, eval (gametree))) (nextMoves tree)
+                bestScore = maximum (map (snd) scores)
+                bestPos = filter (\move -> (snd move) == bestScore) scores
+
+
+
 -- Update the world state after some time has passed
 updateWorld :: Float -- ^ time since last update (you can ignore this)
             -> World -- ^ current world state
@@ -71,20 +90,10 @@ updateWorld t w | hasAI && aiColour == col && length (nextMoves tree) > 0 = --ai
                       hasAI = ai w
                       board = gameboard w
                       tree =(buildTree genAllMoves board col) --get entire gametree
-                      (pos,newTree) = getBestMove 1 tree --get best move from gametree
-                      newBoard = (game_board newTree)
+                      (pos,newTree) = getBestMoveBadAI 1 tree --get best move from gametree
+                      newBoard = (game_board newTree) --get new board from the move associated with this tree
 
-{- Hint: 'updateWorld' is where the AI gets called. If the world state
- indicates that it is a computer player's turn, updateWorld should use
- 'getBestMove' to find where the computer player should play, and update
- the board in the world state with that move.
-
- At first, it is reasonable for this to be a random valid move!
-
- If both players are human players, the simple version above will suffice,
- since it does nothing.
-
- In a complete implementation, 'updateWorld' should also check if either 
+{- In a complete implementation, 'updateWorld' should also check if either 
  player has won and display a message if so.
 -}
 
