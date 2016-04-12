@@ -30,6 +30,8 @@ data Board = Board { size :: Int,
 data World = World { gameboard :: Board,
                      oldworld :: World, --allows for undo
                      hints :: Bool, --if hints are on or not
+                     ai :: Bool,
+                     aiCol :: Col,
                      args :: [String],
                      turn :: Col }
 
@@ -38,11 +40,20 @@ initBoard reversi size = Board size 0 reversi [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
 initWorld :: [String] -> World
-initWorld args = World board world hints args Black
+initWorld args = World board world hints ai aiCol args Black
   where board = initBoard (isReversi args) (checkSize args)
         hints = hasHints args
+        ai = hasAI args
+        aiCol = aiColour args
         world = initWorld args
 
+aiColour :: [String] -> Col
+aiColour arguments | length arguments >= 1 && any (=="black") arguments = Black
+                   | otherwise = White
+
+hasAI :: [String] -> Bool
+hasAI arguments | length arguments >= 1 && any (=="ai") arguments = True
+                | otherwise = False
 
 -- | Check to see if the user wishes to play the game with the
 -- | reversi rule set, that is, that the first two moves by each colour

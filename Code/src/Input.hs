@@ -39,10 +39,12 @@ handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
           newBoard = board {passes = numPasses + 1}
           newCol = other (turn world)
 
-handleInput (EventKey (SpecialKey KeyTab) Down _ _) world
-    = trace ("Tab key down") world
-handleInput (EventKey (SpecialKey KeyTab) Up _ _) world
-  = world {hints = (not (hints world))}
+handleInput (EventKey (Char k) Up _ _) world
+  | k == 'h' = world {hints = (not (hints world))}
+  | k == 'r' = world {gameboard = (board {reversi = rev})}
+  | otherwise = world 
+  where rev = not (reversi (gameboard world))
+        board = gameboard world
 handleInput e world = world
 
 -- | convert the coordinates (with original origin at the center)

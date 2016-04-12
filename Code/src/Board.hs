@@ -108,7 +108,9 @@ detectMoves board col (x:xs) | (reversi board && length (pieces board) < 8) = x:
 -- An evaluation function for a minimax search. Given a board and a colour
 -- return an integer indicating how good the board is for that colour.
 evaluate :: Board -> Col -> Int
-evaluate = undefined
+evaluate board col | col == Black = fst scores
+                   | otherwise = snd scores
+  where scores = checkScore board
 
 
 

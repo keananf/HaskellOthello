@@ -5,7 +5,7 @@ import Game
 
 data GameTree = GameTree { game_board :: Board,
                            game_turn :: Col,
-                           next_moves :: [(Position, GameTree)] }
+                           nextMoves :: [(Position, GameTree)] }
 
 -- Given a function to generate plausible moves (i.e. board positions)
 -- for a player (Col) on a particular board, generate a (potentially)
@@ -34,6 +34,10 @@ buildTree gen b c = let moves = gen b c in -- generated moves
                              -- successful, make move and build tree from 
                              -- here for opposite player
 
+
+genAllMoves :: Board -> Col -> [Position]
+genAllMoves board col = detectMoves board col (allPositions board)
+
 -- Get the best next move from a (possibly infinite) game tree. This should
 -- traverse the game tree up to a certain depth, and pick the move which
 -- leads to the position with the best score for the player whose turn it
@@ -41,13 +45,33 @@ buildTree gen b c = let moves = gen b c in -- generated moves
 getBestMove :: Int -- ^ Maximum search depth
                -> GameTree -- ^ Initial game tree
                -> Position
-getBestMove = undefined
+getBestMove i tree= evalLayer tree
+  where eval :: GameTree -> Int
+        eval tree = evaluate board col
+          where board = (game_board tree)
+                col = game_turn tree
+
+        evalLayer :: GameTree -> Position
+        evalLayer tree = fst (head bestPos)
+          where scores = map (\(pos,gametree) -> (pos, eval (gametree))) (nextMoves tree)
+                bestScore = maximum (map (snd) scores)
+                bestPos = filter (\move -> (snd move) == bestScore) scores
 
 -- Update the world state after some time has passed
 updateWorld :: Float -- ^ time since last update (you can ignore this)
             -> World -- ^ current world state
             -> World
-updateWorld t w = w
+updateWorld t w | hasAI && aiColour == col = --ai v player
+                    case makeMove board col pos of
+                      (Just board') -> w {gameboard = board', turn = other col, oldworld = w}
+                      (Nothing) -> w
+                | otherwise = w --player v player
+                where aiColour = aiCol w
+                      col = turn w
+                      hasAI = ai w
+                      board = gameboard w
+                      tree =(buildTree genAllMoves board col) --get entire gametree
+                      pos = getBestMove 1 tree --get best move from gametree
 
 {- Hint: 'updateWorld' is where the AI gets called. If the world state
  indicates that it is a computer player's turn, updateWorld should use
