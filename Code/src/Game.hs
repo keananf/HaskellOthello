@@ -1,6 +1,9 @@
 module Game where
 
 import Data.Char
+import System.IO
+import System.IO.Unsafe
+import ClientMain
 
 data Col = Black | White
   deriving (Show, Eq)
@@ -32,7 +35,9 @@ data World = World { gameboard :: Board,
                      hints :: Bool, --if hints are on or not
                      ai :: Bool,
                      network :: Bool,
+                     handle :: Handle,
                      aiCol :: Col,
+                     userCol :: Col,
                      args :: [String],
                      turn :: Col }
 
@@ -41,13 +46,18 @@ initBoard reversi size = Board size 0 reversi [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
 initWorld :: [String] -> World
-initWorld args = World board world hints ai network aiCol args Black
+initWorld args = World board world hints ai network (unsafePerformIO getHandle) aiCol userCol args Black
   where board = initBoard (isReversi args) (checkSize args)
         hints = hasHints args
         ai = hasAI args
         network = hasNetwork args
         aiCol = aiColour args
+        userCol = userColour args
         world = initWorld args
+
+userColour :: [String] -> Col
+userColour arguments | length arguments >= 1 && any (=="user=white") arguments = White
+                   | otherwise = Black
 
 aiColour :: [String] -> Col
 aiColour arguments | length arguments >= 1 && any (=="black") arguments = Black
@@ -61,6 +71,10 @@ hasNetwork :: [String] -> Bool
 hasNetwork arguments | length arguments >= 1 && any (=="network") arguments = True
                 | otherwise = False
 
+getHandle :: IO Handle
+getHandle = do
+  handle <- client "localhost" 4024
+  return (handle)
 
 -- | Check to see if the user wishes to play the game with the
 -- | reversi rule set, that is, that the first two moves by each colour

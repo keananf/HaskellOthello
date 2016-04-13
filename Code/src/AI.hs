@@ -2,6 +2,9 @@ module AI where
 
 import Board
 import Game
+import ClientMain
+import System.IO.Unsafe
+
 
 data GameTree = GameTree { game_board :: Board,
                            game_turn :: Col,
@@ -31,7 +34,7 @@ buildTree gen b c = let moves = gen b c in -- generated moves
         = case makeMove b c pos of -- try making the suggested move
                Nothing -> mkNextStates xs -- not successful, no new state
                Just b' -> (pos, buildTree gen b' (other c)) : mkNextStates xs
-                             -- successful, make move and build tree from 
+                             -- successful, make move and build tree from
                              -- here for opposite player
 
 
@@ -90,21 +93,24 @@ getBestMoveGoodAI i tree = head bestMove
 updateWorld :: Float -- ^ time since last update (you can ignore this)
             -> World -- ^ current world state
             -> World
-updateWorld t w | hasNetwork = w --read move from network, update world
+updateWorld t w | networkOn && userColour /= col = case makeMove board col (unsafePerformIO (readNetwork w)) of --read move from network, update world
+                    (Just newBoard') -> w {gameboard =  newBoard', turn = other col, oldworld = w}
+                    (Nothing) -> w
                 | hasAI && aiColour == col && length (nextMoves tree) > 0 = --ai v player
                     w {gameboard = newBoard, turn = other col, oldworld = w}
                 | otherwise = w --player v player or ai has to pass
                 where aiColour = aiCol w
+                      userColour = userCol w
                       col = turn w
                       hasAI = ai w
-                      hasNetwork = network w
+                      networkOn = network w
                       board = gameboard w
                       tree =(buildTree genAllMoves board col) --get entire gametree
                       (pos,newTree) = getBestMoveGoodAI 2 tree --get best move from gametree
                       newBoard = (game_board newTree) --get new board from the move associated with this tree
 
-{- In a complete implementation, 'updateWorld' should also check if either 
- player has won and display a message if so.
--}
 
-
+readNetwork :: World -> IO (Int, Int)
+readNetwork world = do
+  (x,y) <-  readAcrossNetwork (handle world)
+  return (x,y)
