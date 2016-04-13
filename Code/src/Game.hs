@@ -34,6 +34,7 @@ data World = World { gameboard :: Board,
                      oldworld :: World, --allows for undo
                      hints :: Bool, --if hints are on or not
                      ai :: Bool,
+                     difficulty :: String,
                      network :: Bool,
                      handle :: Handle,
                      aiCol :: Col,
@@ -46,12 +47,14 @@ initBoard reversi size = Board size 0 reversi [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
 initWorld :: [String] -> World
-initWorld args = World board world hints ai network (unsafePerformIO getHandle) aiCol userCol args Black
+initWorld args = World board world hints ai difficulty network
+  (unsafePerformIO getHandle) aiCol userCol args Black
   where board = initBoard (isReversi args) (checkSize args)
         hints = hasHints args
         ai = hasAI args
         network = hasNetwork args
         aiCol = aiColour args
+        difficulty = aiDifficulty args
         userCol = userColour args
         world = initWorld args
 
@@ -59,6 +62,10 @@ userColour :: [String] -> Col
 userColour arguments | length arguments >= 1 && any (=="user=white") arguments = White
                      | aiColour arguments == Black = White
                      | otherwise = Black
+
+aiDifficulty :: [String] -> String
+aiDifficulty arguments | length arguments >= 1 && any (=="medium") arguments = "medium"
+                       | otherwise = "easy"
 
 aiColour :: [String] -> Col
 aiColour arguments | length arguments >= 1 && any (=="ai=black") arguments = Black

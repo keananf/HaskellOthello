@@ -45,10 +45,8 @@ genAllMoves board col = detectMoves board col (allPositions board)
 -- traverse the game tree up to a certain depth, and pick the move which
 -- leads to the position with the best score for the player whose turn it
 -- is at the top of the game tree.
-getBestMoveBadAI :: Int -- ^ Maximum search depth
-               -> GameTree -- ^ Initial game tree
-               -> (Position, GameTree)
-getBestMoveBadAI i tree = head bestMove
+getBestMoveBadAI :: GameTree -> (Position, GameTree)
+getBestMoveBadAI tree = head bestMove
   where bestScore = evalLayer tree --tuple of pos and score associated with pos
         bestMove = filter (\move -> (fst move) == (fst bestScore)) (nextMoves tree)
         eval :: GameTree -> Int
@@ -76,10 +74,10 @@ getBestMoveGoodAI i tree = head bestMove
         evalNested :: Int -> GameTree -> (Position, Int)
         evalNested i gt | i > 0 && length (nextMoves gt) > 0 = head bestPos
                         | length (nextMoves gt) > 0= evalLayer gt
-                       -- | otherwise = ((-1,-1), 0)
+                        | otherwise = ((-1,-1), 0)
           where results = (map (\t -> (fst t, snd (evalNested (i-1) (snd t)))) (nextMoves gt))
                 bestScore = maximum (map (snd) results)
-                bestPos = filter (\move -> (snd move) == bestScore) results
+                bestPos = filter (\move -> (snd move) == bestScore) results --get pos associated with score
 
         evalLayer :: GameTree -> (Position, Int)
         evalLayer tree = (head bestPos)
@@ -103,8 +101,12 @@ updateWorld t w | (network w) && (userCol w) /= col =  --read move from network,
                       hasAI = ai w
                       board = gameboard w
                       tree =(buildTree genAllMoves board col) --get entire gametree
-                      (pos,newTree) = getBestMoveBadAI 2 tree --get best move from gametree
+                      (pos,newTree) = chooseAI w tree --get best move from gametree
                       newBoard = (game_board newTree) --get new board from the move associated with this tree
+
+chooseAI :: World -> GameTree-> (Position, GameTree)
+chooseAI world tree | (difficulty world) == "easy" = getBestMoveBadAI tree
+                    | otherwise = getBestMoveGoodAI 3 tree
 
 -- | Reads move from network 
 readNetwork :: World -> IO (Int, Int)

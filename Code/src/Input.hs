@@ -22,31 +22,18 @@ handleInput (EventMotion (x, y)) world
     = trace ("Mouse moved to: " ++ show (x',y')) world
     where (x',y') = convertCoords x y
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
-  | validNetworkMove = unsafePerformIO (getNetwork world x' y')
-  | validGameMove = case makeMove board col (x',y') of
+  | validNetworkMove world x' y' = unsafePerformIO (getNetwork world x' y')
+
+  | validGameMove world x' y' = case makeMove board (turn world) (x',y') of
       (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
       (Nothing) -> world --invalid move. Don't change turns
-  | validUndo = unsafePerformIO (undoMove world) --click outside the board undoes a move
+
+  | validUndo world x' y' = unsafePerformIO (undoMove world) --click outside the board undoes a move
   | otherwise = world --game is over, don't update world
   where (x',y') = convertCoords x y
+        newCol = other (turn world)
         board = gameboard world
-        col = turn world
-        newCol = other col
-        userColour = userCol world
-        hasNetwork = network world
-        hasHandle = handle world
--------------------------------------------------------------------
-        validNetworkMove :: Bool
-        validNetworkMove = not (gameOver board) && userColour == col
-          && hasNetwork && inRange board (x', y')
 
-        validGameMove :: Bool
-        validGameMove = not (gameOver board) && (userColour == col || not (ai world))
-          && not hasNetwork && inRange board (x', y')
-
-        validUndo :: Bool
-        validUndo = not (inRange board (x',y')) && not (gameOver board) && not (network world)
---------------------------------------------------------------------
 
 handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
     = trace ("Space key down") world
@@ -76,9 +63,24 @@ convertCoords x y | y < 0 && x < 0 = (x'-1, y' -1)
                   | y < 0 = (x', y'-1)
                   | x < 0 = (x'-1, y')
                   | otherwise = (x', y')
-  where x' = truncate (x /50) + 4
-        y' = truncate (y /50) + 4
+  where x' = truncate (x / 50) + 4
+        y' = truncate (y / 50) + 4
 
+-------------------------------------------------------------------
+validNetworkMove :: World -> Int -> Int -> Bool
+validNetworkMove world x y = not (gameOver board) && (userCol world) == (turn world)
+  && network world && inRange board (x, y)
+  where board = gameboard world
+
+validGameMove :: World -> Int -> Int  -> Bool
+validGameMove world x y = not (gameOver board) && ((userCol world) == (turn world) || not (ai world))
+  && not (network world) && inRange board (x, y)
+  where board = gameboard world
+
+validUndo :: World -> Int -> Int -> Bool
+validUndo world x y = not (inRange board (x, y)) && not (gameOver board) && not (network world)
+  where board = gameboard world
+--------------------------------------------------------------------
 
 -- | Makes a move and attempts to send it across the network
 getNetwork :: World -> Int -> Int -> IO World
