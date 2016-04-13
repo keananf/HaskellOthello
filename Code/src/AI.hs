@@ -90,21 +90,20 @@ getBestMoveGoodAI i tree = head bestMove
 
 
 -- Update the world state after some time has passed
-updateWorld :: Float -- ^ time since last update (you can ignore this)
+updateWorld :: Float -- ^ time since last update
             -> World -- ^ current world state
             -> World
-updateWorld t w | networkOn && userColour /= col = moveFromNetwork w--read move from network, update world
+updateWorld t w | (network w) && (userCol w) /= col =  --read move from network, update world
+                    moveFromNetwork w
                 | hasAI && aiColour == col && length (nextMoves tree) > 0 = --ai v player
                     w {gameboard = newBoard, turn = other col, oldworld = w}
                 | otherwise = w --player v player or ai has to pass
                 where aiColour = aiCol w
-                      userColour = userCol w
                       col = turn w
                       hasAI = ai w
-                      networkOn = network w
                       board = gameboard w
                       tree =(buildTree genAllMoves board col) --get entire gametree
-                      (pos,newTree) = getBestMoveGoodAI 2 tree --get best move from gametree
+                      (pos,newTree) = getBestMoveBadAI 2 tree --get best move from gametree
                       newBoard = (game_board newTree) --get new board from the move associated with this tree
 
 -- | Reads move from network 
@@ -115,11 +114,11 @@ readNetwork world = do
 
 -- |Processes move received from network
 moveFromNetwork :: World -> World
-moveFromNetwork w | x /= (-1) && y /= (-1) =
+moveFromNetwork w | x /= (-1) && y /= (-1)=
                         case makeMove board col (x,y) of
                           (Just newBoard') -> w {gameboard =  newBoard', turn = other col, oldworld = w}
                           (Nothing) -> w
-                  | otherwise = oldworld w
+                  | otherwise = oldworld (oldworld w)
   where (x,y) = (unsafePerformIO (readNetwork w))
         board = gameboard w
         col = turn w

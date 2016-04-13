@@ -119,10 +119,10 @@ gameOver board | (passes board) == 2 = True
 
 -- | Attempts to undo a move given the particular type of game
 undoMove :: World -> IO World
-undoMove world | network world && userColour /= col = do let newWorld = oldworld world
-                                                         sendAcrossNetwork networkHandle (-1) (-1)
-                                                         return newWorld
-               | not (ai world) = do let newWorld = oldworld world --undoes move for player v player
+undoMove world | network world && userColour == col= do let newWorld = oldworld (oldworld world)
+                                                        sendAcrossNetwork networkHandle (-1) (-1)
+                                                        return newWorld
+               | not (ai world) = do let newWorld = oldworld world--undoes move for player v player
                                      print ""
                                      return newWorld
                | otherwise = do let newWorld = oldworld (oldworld world) --undoes for ai v player

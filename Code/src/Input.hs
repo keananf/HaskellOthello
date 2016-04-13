@@ -45,7 +45,7 @@ handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
           && not hasNetwork && inRange board (x', y')
 
         validUndo :: Bool
-        validUndo = not (inRange board (x',y')) && not (gameOver board)
+        validUndo = not (inRange board (x',y')) && not (gameOver board) && not (network world)
 --------------------------------------------------------------------
 
 handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
