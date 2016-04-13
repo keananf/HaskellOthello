@@ -93,9 +93,7 @@ getBestMoveGoodAI i tree = head bestMove
 updateWorld :: Float -- ^ time since last update (you can ignore this)
             -> World -- ^ current world state
             -> World
-updateWorld t w | networkOn && userColour /= col = case makeMove board col (unsafePerformIO (readNetwork w)) of --read move from network, update world
-                    (Just newBoard') -> w {gameboard =  newBoard', turn = other col, oldworld = w}
-                    (Nothing) -> w
+updateWorld t w | networkOn && userColour /= col = moveFromNetwork w--read move from network, update world
                 | hasAI && aiColour == col && length (nextMoves tree) > 0 = --ai v player
                     w {gameboard = newBoard, turn = other col, oldworld = w}
                 | otherwise = w --player v player or ai has to pass
@@ -109,8 +107,19 @@ updateWorld t w | networkOn && userColour /= col = case makeMove board col (unsa
                       (pos,newTree) = getBestMoveGoodAI 2 tree --get best move from gametree
                       newBoard = (game_board newTree) --get new board from the move associated with this tree
 
-
+-- | Reads move from network 
 readNetwork :: World -> IO (Int, Int)
 readNetwork world = do
   (x,y) <-  readAcrossNetwork (handle world)
   return (x,y)
+
+-- |Processes move received from network
+moveFromNetwork :: World -> World
+moveFromNetwork w | x /= (-1) && y /= (-1) =
+                        case makeMove board col (x,y) of
+                          (Just newBoard') -> w {gameboard =  newBoard', turn = other col, oldworld = w}
+                          (Nothing) -> w
+                  | otherwise = oldworld w
+  where (x,y) = (unsafePerformIO (readNetwork w))
+        board = gameboard w
+        col = turn w

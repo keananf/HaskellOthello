@@ -5,6 +5,9 @@ import Graphics.Gloss
 import Board
 import AI
 import Game
+import ClientMain
+import System.IO.Unsafe
+
 
 import Debug.Trace
 
@@ -19,21 +22,31 @@ handleInput (EventMotion (x, y)) world
     = trace ("Mouse moved to: " ++ show (x',y')) world
     where (x',y') = convertCoords x y
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
-  | not (gameOver board)&& hasNetwork && inRange board (x', y') = case makeMove board col (x',y') of
-      (Just newBoard') -> do let newWorld = world {gameboard = newBoard', turn = newCol, oldworld = world}
-                             sendAcrossNetwork x' y'
-                             return newWorld
-      (Nothing) -> world --invalid move. Don't change turns
-  | not (gameOver board)&& not hasNetwork && inRange board (x', y') = case makeMove board col (x',y') of
+  | validNetworkMove = unsafePerformIO (getNetwork world x' y')
+  | validGameMove = case makeMove board col (x',y') of
       (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
       (Nothing) -> world --invalid move. Don't change turns
-  | not (gameOver board) = undo world --click outside the board undoes a move
+  | validUndo = unsafePerformIO (undoMove world) --click outside the board undoes a move
   | otherwise = world --game is over, don't update world
   where (x',y') = convertCoords x y
         board = gameboard world
         col = turn world
         newCol = other col
+        userColour = userCol world
         hasNetwork = network world
+        hasHandle = handle world
+-------------------------------------------------------------------
+        validNetworkMove :: Bool
+        validNetworkMove = not (gameOver board) && userColour == col
+          && hasNetwork && inRange board (x', y')
+
+        validGameMove :: Bool
+        validGameMove = not (gameOver board) && (userColour == col || not (ai world))
+          && not hasNetwork && inRange board (x', y')
+
+        validUndo :: Bool
+        validUndo = not (inRange board (x',y')) && not (gameOver board)
+--------------------------------------------------------------------
 
 handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
     = trace ("Space key down") world
@@ -48,10 +61,12 @@ handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
 handleInput (EventKey (Char k) Up _ _) world
   | k == 'h' = world {hints = (not (hints world))}
   | k == 'r' = world {gameboard = (board {reversi = rev})}
-  | otherwise = world 
+  | otherwise = world
   where rev = not (reversi (gameboard world))
         board = gameboard world
 handleInput e world = world
+
+
 
 -- | convert the coordinates (with original origin at the center)
 -- | to be integers 0 - 7 and with the origin starting in the bottom left
@@ -64,3 +79,17 @@ convertCoords x y | y < 0 && x < 0 = (x'-1, y' -1)
   where x' = truncate (x /50) + 4
         y' = truncate (y /50) + 4
 
+
+-- | Makes a move and attempts to send it across the network
+getNetwork :: World -> Int -> Int -> IO World
+getNetwork world x y = case makeMove board col (x,y) of --make move and send across network
+    (Just newBoard') -> do let newWorld = world {gameboard = newBoard', turn = newCol, oldworld = world}
+                           sendAcrossNetwork networkHandle x y
+                           return newWorld
+    (Nothing) -> do let newWorld = world --bad move, dont update world
+                    print ""
+                    return newWorld
+    where board = gameboard world
+          col = turn world
+          newCol = other col
+          networkHandle = handle world
