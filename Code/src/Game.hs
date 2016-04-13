@@ -57,10 +57,11 @@ initWorld args = World board world hints ai network (unsafePerformIO getHandle) 
 
 userColour :: [String] -> Col
 userColour arguments | length arguments >= 1 && any (=="user=white") arguments = White
-                   | otherwise = Black
+                     | aiColour arguments == Black = White
+                     | otherwise = Black
 
 aiColour :: [String] -> Col
-aiColour arguments | length arguments >= 1 && any (=="black") arguments = Black
+aiColour arguments | length arguments >= 1 && any (=="ai=black") arguments = Black
                    | otherwise = White
 
 hasAI :: [String] -> Bool
@@ -116,7 +117,17 @@ gameOver board | (passes board) == 2 = True
                | length (pieces board) == (size board) * (size board) = True
                | otherwise = False
 
--- | Rolls back the world to the previous state
-undo :: World -> World
-undo world | ai world = oldworld (oldworld world)
-           | otherwise = oldworld world
+-- | Attempts to undo a move given the particular type of game
+undoMove :: World -> IO World
+undoMove world | network world && userColour /= col = do let newWorld = oldworld world
+                                                         sendAcrossNetwork networkHandle (-1) (-1)
+                                                         return newWorld
+               | not (ai world) = do let newWorld = oldworld world --undoes move for player v player
+                                     print ""
+                                     return newWorld
+               | otherwise = do let newWorld = oldworld (oldworld world) --undoes for ai v player
+                                print ""
+                                return newWorld
+               where networkHandle = handle world
+                     userColour = userCol world
+                     col = turn world
