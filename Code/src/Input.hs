@@ -19,7 +19,12 @@ handleInput (EventMotion (x, y)) world
     = trace ("Mouse moved to: " ++ show (x',y')) world
     where (x',y') = convertCoords x y
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
-  | not (gameOver board) && inRange board (x', y') = case makeMove board col (x',y') of
+  | not (gameOver board)&& hasNetwork && inRange board (x', y') = case makeMove board col (x',y') of
+      (Just newBoard') -> do let newWorld = world {gameboard = newBoard', turn = newCol, oldworld = world}
+                             sendAcrossNetwork x' y'
+                             return newWorld
+      (Nothing) -> world --invalid move. Don't change turns
+  | not (gameOver board)&& not hasNetwork && inRange board (x', y') = case makeMove board col (x',y') of
       (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
       (Nothing) -> world --invalid move. Don't change turns
   | not (gameOver board) = undo world --click outside the board undoes a move
@@ -28,6 +33,7 @@ handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
         board = gameboard world
         col = turn world
         newCol = other col
+        hasNetwork = network world
 
 handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
     = trace ("Space key down") world
