@@ -63,12 +63,20 @@ getBestMoveGoodAI :: Int -- ^ Maximum search depth
                -> GameTree -- ^ Initial game tree
                -> (Position, GameTree)
 getBestMoveGoodAI i tree = head bestMove
-  where bestScore = evalLayer tree --tuple of pos and score associated with pos
+  where bestScore = evalNested i tree --tuple of pos and score associated with pos
         bestMove = filter (\move -> (fst move) == (fst bestScore)) (nextMoves tree)
         eval :: GameTree -> Int
         eval tree = evaluate board col
           where board = (game_board tree)
                 col = game_turn tree
+
+        evalNested :: Int -> GameTree -> (Position, Int)
+        evalNested i gt | i > 0 && length (nextMoves gt) > 0 = head bestPos
+                        | length (nextMoves gt) > 0= evalLayer gt
+                       -- | otherwise = ((-1,-1), 0)
+          where results = (map (\t -> (fst t, snd (evalNested (i-1) (snd t)))) (nextMoves gt))
+                bestScore = maximum (map (snd) results)
+                bestPos = filter (\move -> (snd move) == bestScore) results
 
         evalLayer :: GameTree -> (Position, Int)
         evalLayer tree = (head bestPos)
@@ -82,15 +90,17 @@ getBestMoveGoodAI i tree = head bestMove
 updateWorld :: Float -- ^ time since last update (you can ignore this)
             -> World -- ^ current world state
             -> World
-updateWorld t w | hasAI && aiColour == col && length (nextMoves tree) > 0 = --ai v player
+updateWorld t w | hasNetwork = w --read move from network, update world
+                | hasAI && aiColour == col && length (nextMoves tree) > 0 = --ai v player
                     w {gameboard = newBoard, turn = other col, oldworld = w}
                 | otherwise = w --player v player or ai has to pass
                 where aiColour = aiCol w
                       col = turn w
                       hasAI = ai w
+                      hasNetwork = network w
                       board = gameboard w
                       tree =(buildTree genAllMoves board col) --get entire gametree
-                      (pos,newTree) = getBestMoveBadAI 1 tree --get best move from gametree
+                      (pos,newTree) = getBestMoveGoodAI 2 tree --get best move from gametree
                       newBoard = (game_board newTree) --get new board from the move associated with this tree
 
 {- In a complete implementation, 'updateWorld' should also check if either 
