@@ -71,23 +71,29 @@ getBestMoveGoodAI i tree w = head bestMove
 updateWorld :: Float -- ^ time since last update
             -> World -- ^ current world state
             -> World
-updateWorld t w | (network w) && (userCol w) /= col =  --read move from network, update world
+updateWorld t w | gameOver (gameboard w) = w {gameState=GameOver}
+                | (network w) && (userCol w) /= col =  --read move from network, update world
                     moveFromNetwork w
-                | hasAI && aiColour == col && length (nextMoves tree) > 0 = --ai v player
+
+                --ai v player
+                | state==Playing && hasAI && aiColour == col && length (nextMoves tree) > 0 =
                     w {gameboard = newBoard, turn = other col, oldworld = w}
-                | hasAI && aiColour == col = w {turn = other (turn w), oldworld = w} --ai has to pass
-                | otherwise = w --player v player
+
+                | state==Playing && hasAI && aiColour == col = --ai has to pass
+                  w {turn = other col, oldworld = w}
+                | otherwise = w --player v player or game not started yet
                 where aiColour = aiCol w
                       col = turn w
                       hasAI = ai w
+                      state = gameState w
                       board = gameboard w
                       tree =(buildTree genAllMoves board col) --get entire gametree
                       (pos,newTree) = chooseAI w tree --get best move from gametree
                       newBoard = (game_board newTree) --get new board from the move associated with this tree
 
 chooseAI :: World -> GameTree-> (Position, GameTree)
-chooseAI world tree | (difficulty world) == 1 = getBestMoveBadAI tree world
-                    | otherwise = getBestMoveGoodAI 3 tree world
+chooseAI world tree | (difficulty world) == 1 = getBestMoveBadAI tree world --easy
+                    | otherwise = getBestMoveGoodAI 3 tree world --medium
 
 -- | Reads move from network
 readNetwork :: World -> IO (Int, Int)
