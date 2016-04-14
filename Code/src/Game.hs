@@ -34,7 +34,7 @@ data World = World { gameboard :: Board,
                      oldworld :: World, --allows for undo
                      hints :: Bool, --if hints are on or not
                      ai :: Bool,
-                     difficulty :: String,
+                     difficulty :: Int,
                      network :: Bool,
                      handle :: Handle,
                      aiCol :: Col,
@@ -62,9 +62,9 @@ userColour :: [String] -> Col
 userColour arguments | length arguments >= 1 && any (=="user=white") arguments = White
                      | otherwise = Black
 
-aiDifficulty :: [String] -> String
-aiDifficulty arguments | length arguments >= 1 && any (=="medium") arguments = "medium"
-                       | otherwise = "easy"
+aiDifficulty :: [String] -> Int
+aiDifficulty arguments | length arguments >= 1 && any (=="medium") arguments = 2
+                       | otherwise = 1
 
 hasAI :: [String] -> Bool
 hasAI arguments | length arguments >= 1 && any (=="ai") arguments = True

@@ -21,7 +21,6 @@ drawWorld tiles world | not (gameOver board) = scale 0.5 0.5 picture
 drawGameOver :: [Picture]
 drawGameOver = pics
   where background = (rectangleSolid 800 800)
-        gameOverMsg :: Picture
         gameOverMsg = color white (translate (-350) (-150) (text ("Game Over.")))
         continueMsg = color white (translate (-850) (-350) (text ("Press Space to Start Again")))
         pics = (background:[(scale 0.5 0.5 gameOverMsg), (scale 0.5 0.5 continueMsg)])
