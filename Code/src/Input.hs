@@ -22,7 +22,7 @@ handleInput (EventMotion (x, y)) world
     = trace ("Mouse moved to: " ++ show (x',y')) world
     where (x',y') = convertCoords x y
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
-  | validNetworkMove world x' y' = unsafePerformIO (getNetwork world x' y')
+  | validNetworkMove world x' y' = unsafePerformIO (moveOverNetwork world x' y')
 
   | validGameMove world x' y' = case makeMove board (turn world) (x',y') of
       (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
@@ -38,7 +38,8 @@ handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
 handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
     = trace ("Space key down") world
 handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
-    | not (gameOver board) = world {gameboard = newBoard, oldworld = world, turn = newCol}
+    | not (network world) && not (gameOver board) = world {gameboard = newBoard, oldworld = world, turn = newCol}
+    | (network world) && not (gameOver board) = unsafePerformIO (passOverNetwork world)
     | otherwise = initWorld (args world)--Reset game when gameover and space pressed
     where board = gameboard world
           numPasses = passes board
@@ -82,11 +83,17 @@ validUndo world x y = not (inRange board (x, y)) && not (gameOver board) && not 
   where board = gameboard world
 --------------------------------------------------------------------
 
+--sends a pass over the network
+passOverNetwork :: World -> IO World
+passOverNetwork world = do let newWorld = world {oldworld = world, turn = other (turn world)}
+                           sendAcrossNetwork (handle world) (-1) (-1)
+                           return newWorld
+
 -- | Makes a move and attempts to send it across the network
-getNetwork :: World -> Int -> Int -> IO World
-getNetwork world x y = case makeMove board col (x,y) of --make move and send across network
+moveOverNetwork :: World -> Int -> Int -> IO World
+moveOverNetwork world x y = case makeMove board col (x,y) of --make move and send across network
     (Just newBoard') -> do let newWorld = world {gameboard = newBoard', turn = newCol, oldworld = world}
-                           sendAcrossNetwork networkHandle x y
+                           sendAcrossNetwork (handle world) x y
                            return newWorld
     (Nothing) -> do let newWorld = world --bad move, dont update world
                     print ""
@@ -94,4 +101,3 @@ getNetwork world x y = case makeMove board col (x,y) of --make move and send acr
     where board = gameboard world
           col = turn world
           newCol = other col
-          networkHandle = handle world
