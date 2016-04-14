@@ -1,4 +1,4 @@
-module Draw(drawWorld, undoExtent, hintsExtent) where
+module Draw(drawWorld, undoExtent, hintsExtent, playExtent, aiExtent, aiEasyExtent, aiMedExtent) where
 
 import Graphics.Gloss
 import Graphics.Gloss.Data.Extent
@@ -10,7 +10,9 @@ type Types = (Picture, Picture, Picture, Picture)
 -- This extracts the Board from the world state and draws it
 -- as a grid plus pieces.
 drawWorld :: Types -> World -> Picture
-drawWorld tiles world | not (gameOver b) = scale sf sf picture --draw board if not game over
+drawWorld tiles world | (gameState world) == Playing = scale sf sf picture --draw board if not game over
+                      | (gameState world) == Menu = scale sf sf (drawMenu b)
+                      | (gameState world) == Paused = scale sf sf (pictures ((drawPause b) ++ (map (centreImg) score)))
                       | otherwise = scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score)))
   where b = gameboard world
         boardTiles = (getTiles b world tiles) --list of pictures representing the tiles
@@ -49,6 +51,7 @@ checkValidMove board world x y (tile, moveTile)
 -----------------------------------------------------------------------------------
 --Draw text functions
 
+
 -- | draws the gameover screen
 drawGameOver :: Board -> [Picture]
 drawGameOver b = pics
@@ -56,6 +59,28 @@ drawGameOver b = pics
         gameOverMsg = color white (translate (0) (-550) (centreImg(text ("Game Over."))))
         continueMsg = color white (translate (-850) (-750) (text ("Press Space to Start Again")))
         pics = (background:[(scale sf sf gameOverMsg), (scale sf sf continueMsg)])
+
+-- | draws the pause screen
+drawPause :: Board -> [Picture]
+drawPause b = pics
+  where background = (rectangleSolid (backgroundSize b) (backgroundSize b))
+        gameOverMsg = color white (translate (0) (-550) (centreImg(text ("Paused."))))
+        continueMsg = color white (translate (-850) (-750) (text ("Press 'p' to Continue")))
+        pics = (background:[(scale sf sf gameOverMsg), (scale sf sf continueMsg)])
+
+
+-- | draws the menu screen
+drawMenu :: Board -> Picture
+drawMenu b = pictures (pics)
+  where background = (rectangleSolid (backgroundSize b) (backgroundSize b))
+        playMsg = color white (translate (250) (-200) (centreImg(text ("Play"))))
+        aiMsg = color white (translate (1300) (375) (centreImg(text ("AI"))))
+        aiEasyMsg = color white (translate (1300) (75) (centreImg(text ("Easy"))))
+        aiMediumMsg = color white (translate (1300) (-175) (centreImg(text ("Medium"))))
+        options = map (\pic -> scale sf sf pic) (aiMsg:[aiEasyMsg, aiMediumMsg])
+        titleMsg = color white (translate (200) (550) (centreImg(text ("Othello"))))
+        pics = (background:[playMsg, (scale 1.5 1.5 titleMsg)]) ++ options
+
 
 -- | Display whose turn it is at the bottom of the board
 drawTurn :: World -> Picture
@@ -96,6 +121,22 @@ undoExtent b = makeExtent 7 6 (0) (-3)
 
 hintsExtent :: Board -> Extent
 hintsExtent b = makeExtent (3) (2) (0) (-3)
+  where len = backgroundSize b
+
+playExtent :: Board -> Extent
+playExtent b = makeExtent (0) (-2) (5) (3)
+  where len = backgroundSize b
+
+aiExtent :: Board -> Extent
+aiExtent b = makeExtent (5) (4) (10) (8)
+  where len = backgroundSize b
+
+aiEasyExtent :: Board -> Extent
+aiEasyExtent b = makeExtent (3) (2) (10) (7)
+  where len = backgroundSize b
+
+aiMedExtent :: Board -> Extent
+aiMedExtent b = makeExtent (2) (1) (11) (7)
   where len = backgroundSize b
 
 -------------------------------------------------------------

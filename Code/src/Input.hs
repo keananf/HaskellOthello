@@ -21,9 +21,11 @@ import Debug.Trace
 -- to stderr, which can worlde a very useful way of debugging!
 handleInput :: Event -> World -> World
 handleInput (EventMotion (x, y)) world
-    = trace ("Mouse moved to: " ++ show (x', y')) world
-    where (x',y') = convertCoords x y
+  =trace ("Mouse moved to: " ++ show (x', y')) world
+  where (x',y') = convertCoords x y
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
+  | (gameState world) == Paused = world --ignore input until it is not paused
+  | (gameState world) == Menu = handleMenuInput x' y' world
   | coordInExtent (undoExtent board) (x',y') && validUndo world x' y' = unsafePerformIO (undoMove world)
   | coordInExtent (hintsExtent board) (x',y') = world {hints = (not (hints world))}
 
@@ -33,7 +35,8 @@ handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
       (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
       (Nothing) -> world --invalid move. Don't change turns
 
-  | otherwise = world --game is over, don't update world
+  | gameOver board = world {gameState = GameOver} --game is over, don't update world
+  | otherwise = world --click out of range, or other undefined behaviour is ignored
   where (x',y') = convertCoords x y
         newCol = other (turn world)
         board = gameboard world
@@ -42,6 +45,7 @@ handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
 handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
     = trace ("Space key down") world
 handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
+    | (gameState world) == Paused = world --ignore space on pause
     | not (network world) && not (gameOver board) = world {gameboard = newBoard, oldworld = world, turn = newCol}
     | (network world) && not (gameOver board) = unsafePerformIO (passOverNetwork world)
     | otherwise = initWorld (args world)--Reset game when gameover and space pressed
@@ -52,11 +56,22 @@ handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
 
 handleInput (EventKey (Char k) Up _ _) world
   | k == 'r' = world {gameboard = (board {reversi = rev})}
+  | k == 'p' && (gameState world) == Paused = world {gameState = Playing} --unpause
+  | k == 'p' && (gameState world) == Playing = world {gameState = Paused} --pause
   | otherwise = world
   where rev = not (reversi (gameboard world))
         board = gameboard world
 handleInput e world = world
 
+
+------------------------------------------------------------------------
+handleMenuInput :: Int -> Int -> World -> World
+handleMenuInput x y world| coordInExtent (playExtent board) (x, y) = world {gameState=Playing}
+                         | coordInExtent (aiExtent board) (x, y) = world {ai= not(ai world)}
+                         | coordInExtent (aiEasyExtent board) (x, y) = world {difficulty=1, ai=True}
+                         | coordInExtent (aiMedExtent board) (x, y) = world {difficulty=2, ai=True}
+                         | otherwise = world
+  where board = gameboard world
 
 
 -- | convert the coordinates (with original origin at the center)
@@ -73,9 +88,10 @@ convertCoords x y | y < 0 && x < 0 = (x'-1, y' -1)
 -------------------------------------------------------------------
 --Valid Move functions
 validNetworkMove :: World -> Int -> Int -> Bool
-validNetworkMove world x y = not (gameOver board) && (userCol world) == (turn world)
+validNetworkMove world x y = not (gameOver board) && state == Playing&& (userCol world) == (turn world)
   && network world && inRange board (x, y)
   where board = gameboard world
+        state = gameState world
 
 validGameMove :: World -> Int -> Int  -> Bool
 validGameMove world x y = not (gameOver board) && ((userCol world) == (turn world) || not (ai world))

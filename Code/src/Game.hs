@@ -12,6 +12,8 @@ type Position = (Int, Int)
 type Piece = (Position, Col)
 
 
+data GameState = Menu | Paused | GameOver | Playing
+  deriving Eq
 -- A Board is a record containing the board size (a board is a square grid, n *
 -- n), the number of consecutive passes, and a list of pairs of position and
 -- the colour at that position.
@@ -31,15 +33,16 @@ data Board = Board { size :: Int,
 -- will be useful (infomation for the AI, for example, such as where the
 -- most recent moves were).
 data World = World { gameboard :: Board,
+                     gameState :: GameState,
                      oldworld :: World, --allows for undo
                      hints :: Bool, --if hints are on or not
-                     ai :: Bool,
-                     difficulty :: Int,
-                     network :: Bool,
-                     handle :: Handle,
-                     aiCol :: Col,
-                     userCol :: Col,
-                     args :: [String],
+                     ai :: Bool, --if ai is on
+                     difficulty :: Int, --difficulty of ai
+                     network :: Bool, --if network is on
+                     handle :: Handle, --handle representing network connection
+                     aiCol :: Col, --ai colour
+                     userCol :: Col, --user colour
+                     args :: [String], --all args passed in
                      turn :: Col }
 
 initBoard :: Bool -> Int -> Board
@@ -47,7 +50,7 @@ initBoard reversi size = Board size 0 reversi [((3,4), Black), ((4,4), White),
                        ((3,3), White), ((4,3), Black)]
 
 initWorld :: [String] -> World
-initWorld args = World board world hints ai difficulty network
+initWorld args = World board Menu world hints ai difficulty network
   (unsafePerformIO getHandle) aiCol userCol args Black
   where board = initBoard (isReversi args) (checkSize args)
         hints = hasHints args
