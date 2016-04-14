@@ -53,24 +53,18 @@ initWorld args = World board world hints ai difficulty network
         hints = hasHints args
         ai = hasAI args
         network = hasNetwork args
-        aiCol = aiColour args
         difficulty = aiDifficulty args
         userCol = userColour args
+        aiCol = opp userCol
         world = initWorld args
 
 userColour :: [String] -> Col
 userColour arguments | length arguments >= 1 && any (=="user=white") arguments = White
-                     | aiColour arguments == Black = White
                      | otherwise = Black
 
 aiDifficulty :: [String] -> String
 aiDifficulty arguments | length arguments >= 1 && any (=="medium") arguments = "medium"
                        | otherwise = "easy"
-
-aiColour :: [String] -> Col
-aiColour arguments | length arguments >= 1 && any (=="ai=black") arguments = Black
-                   | userColour arguments == White = Black
-                   | otherwise = White
 
 hasAI :: [String] -> Bool
 hasAI arguments | length arguments >= 1 && any (=="ai") arguments = True
@@ -103,6 +97,12 @@ checkSize arguments | length nums >= 1 = read (head nums) :: Int
 hasHints :: [String] -> Bool
 hasHints arguments | length arguments >= 1 && any (=="hints") arguments = True
                    | otherwise = False
+
+opp :: Col -> Col
+opp Black = White
+opp White = Black
+
+
 -----------------------------------------------------------------
 -- Check the current score
 -- Returns a pair of the number of black pieces, and the number of
