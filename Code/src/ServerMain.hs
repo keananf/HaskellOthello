@@ -66,17 +66,25 @@ gameLoop idToPlay chanInput chanOutputP1 chanOutputP2 = do
 waitForCorrectInputChan :: Int -> Chan Msg -> IO(Msg)
 waitForCorrectInputChan idToPlay chanInput = do
   (playerID, msg) <- readChan chanInput
-
-  if playerID == idToPlay
-    then return (playerID, msg)
-    else do print $ "Message declined : from [" ++ show playerID ++ "] -> " ++ msg ++ " ID TO PLAY : " ++ show idToPlay
-            waitForCorrectInputChan idToPlay chanInput
+  if msg == "-3,-3"
+    then
+      if playerID == 1
+        then
+          return (2, msg)
+        else
+          return (1, msg)
+    else
+      if playerID == idToPlay
+        then return (playerID, msg)
+        else do print $ "Message declined : from [" ++ show playerID ++ "] -> " ++ msg ++ " ID TO PLAY : " ++ show idToPlay
+                waitForCorrectInputChan idToPlay chanInput
 
 receiveMessageLoop :: Handle -> Int -> Int -> Chan Msg -> IO() --Put onto input chan
 receiveMessageLoop handle gameNum playerID chanInput = do
   end <- hIsEOF handle
   if end
     then do
+      writeChan chanInput (playerID, "-3,-3")
       print $ "GAME " ++ show gameNum ++ ", PLAYER " ++ show playerID ++ " DISCONNECTED"
     else do
       message <- hGetLine handle
@@ -87,8 +95,14 @@ receiveMessageLoop handle gameNum playerID chanInput = do
 sendMessageLoop :: Handle -> Chan Msg -> IO()
 sendMessageLoop handle chanOutput = do
   (playerID, message) <- readChan chanOutput
-  sendMessage handle message
-  sendMessageLoop handle chanOutput
+  if message == "-3,-3"
+    then do
+      sendMessage handle message
+      print "Game finished, one player disconnected, closing remaining handle"
+      hClose handle
+    else do
+      sendMessage handle message
+      sendMessageLoop handle chanOutput
 
 sendMessage :: Handle -> String -> IO() --Read from output chan
 sendMessage handle msg = do

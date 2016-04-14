@@ -89,7 +89,7 @@ chooseAI :: World -> GameTree-> (Position, GameTree)
 chooseAI world tree | (difficulty world) == 1 = getBestMoveBadAI tree world
                     | otherwise = getBestMoveGoodAI 3 tree world
 
--- | Reads move from network 
+-- | Reads move from network
 readNetwork :: World -> IO (Int, Int)
 readNetwork world = do
   (x,y) <-  readAcrossNetwork (handle world)
@@ -97,7 +97,8 @@ readNetwork world = do
 
 -- |Processes move received from network
 moveFromNetwork :: World -> World
-moveFromNetwork w | x /= (-1) && y /= (-1)= --not a pass
+moveFromNetwork w | x == (-3) && y == (-3) = w {turn = col, ai = True, aiCol = col, network = False}
+                  | x /= (-1) && y /= (-1)= --not a pass
                         case makeMove board col (x,y) of
                           (Just newBoard') -> w {gameboard =  newBoard', turn = other col, oldworld = w}
                           (Nothing) -> w {turn = other col, oldworld = w}
