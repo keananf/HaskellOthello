@@ -10,7 +10,7 @@ type Types = (Picture, Picture, Picture, Picture)
 -- as a grid plus pieces.
 drawWorld :: Types -> World -> Picture
 drawWorld tiles world | not (gameOver board) = scale 0.5 0.5 picture
-                      | otherwise = scale 0.5 0.5 drawGameOver
+                      | otherwise = scale 0.5 0.5 (pictures (drawGameOver ++ (drawScore board)))
   where board = gameboard world
         boardTiles = (getTiles board world tiles)
         score = drawScore board
@@ -18,13 +18,13 @@ drawWorld tiles world | not (gameOver board) = scale 0.5 0.5 picture
         picture = translate (-350.0) (-350.0) (pictures(turnImg:(score ++ boardTiles)))
 
 -- | draws the gameover screen
-drawGameOver :: Picture
+drawGameOver :: [Picture]
 drawGameOver = pics
   where background = (rectangleSolid 800 800)
         gameOverMsg :: Picture
         gameOverMsg = color white (translate (-350) (-150) (text ("Game Over.")))
         continueMsg = color white (translate (-850) (-350) (text ("Press Space to Start Again")))
-        pics = pictures (background:[(scale 0.5 0.5 gameOverMsg), (scale 0.5 0.5 continueMsg)])
+        pics = (background:[(scale 0.5 0.5 gameOverMsg), (scale 0.5 0.5 continueMsg)])
 
 -- | Display whose turn it is at the bottom of the board
 drawTurn :: World -> Picture
@@ -36,8 +36,8 @@ drawTurn world = scale 0.5 0.5 (color white pic)
 drawScore :: Board -> [Picture]
 drawScore board = map (\pic -> scale 0.5 0.5 (color white pic)) pics 
   where scores = checkScore board
-        score1 = translate (1750) (800) (text ("Black: " ++ show(fst scores)))
-        score2 = translate (1750) (300)(text ("White: " ++ show(snd scores)))
+        score1 = translate (1700) (800) (text ("Black: " ++ show(fst scores)))
+        score2 = translate (1700) (300)(text ("White: " ++ show(snd scores)))
         pics = (score1:[score2])
 
 -- | Retrieves the composite picture of each individual picture representing

@@ -69,6 +69,7 @@ aiDifficulty arguments | length arguments >= 1 && any (=="medium") arguments = "
 
 aiColour :: [String] -> Col
 aiColour arguments | length arguments >= 1 && any (=="ai=black") arguments = Black
+                   | userColour arguments == White = Black
                    | otherwise = White
 
 hasAI :: [String] -> Bool

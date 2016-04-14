@@ -45,47 +45,27 @@ genAllMoves board col = detectMoves board col (allPositions board)
 -- traverse the game tree up to a certain depth, and pick the move which
 -- leads to the position with the best score for the player whose turn it
 -- is at the top of the game tree.
-getBestMoveBadAI :: GameTree -> (Position, GameTree)
-getBestMoveBadAI tree = head bestMove
-  where bestScore = evalLayer tree --tuple of pos and score associated with pos
+getBestMoveBadAI :: GameTree -> World -> (Position, GameTree)
+getBestMoveBadAI tree w = head bestMove
+  where bestScore = evalLayer tree w --tuple of pos and score associated with pos
         bestMove = filter (\move -> (fst move) == (fst bestScore)) (nextMoves tree)
-        eval :: GameTree -> Int
-        eval tree = evaluate board col
-          where board = (game_board tree)
-                col = game_turn tree
 
-        evalLayer :: GameTree -> (Position, Int)
-        evalLayer tree = (head bestPos)
-          where scores = map (\(pos,gametree) -> (pos, eval (gametree))) (nextMoves tree)
-                bestScore = maximum (map (snd) scores)
-                bestPos = filter (\move -> (snd move) == bestScore) scores
 
 getBestMoveGoodAI :: Int -- ^ Maximum search depth
                -> GameTree -- ^ Initial game tree
+               -> World
                -> (Position, GameTree)
-getBestMoveGoodAI i tree = head bestMove
+getBestMoveGoodAI i tree w = head bestMove
   where bestScore = evalNested i tree --tuple of pos and score associated with pos
         bestMove = filter (\move -> (fst move) == (fst bestScore)) (nextMoves tree)
-        eval :: GameTree -> Int
-        eval tree = evaluate board col
-          where board = (game_board tree)
-                col = game_turn tree
 
         evalNested :: Int -> GameTree -> (Position, Int)
         evalNested i gt | i > 0 && length (nextMoves gt) > 0 = head bestPos
-                        | length (nextMoves gt) > 0= evalLayer gt
-                        | otherwise = ((-1,-1), 0)
+                        | length (nextMoves gt) > 0= evalLayer gt w
+                        | otherwise = ((-1,-1), -100)
           where results = (map (\t -> (fst t, snd (evalNested (i-1) (snd t)))) (nextMoves gt))
                 bestScore = maximum (map (snd) results)
                 bestPos = filter (\move -> (snd move) == bestScore) results --get pos associated with score
-
-        evalLayer :: GameTree -> (Position, Int)
-        evalLayer tree = (head bestPos)
-          where scores = map (\(pos,gametree) -> (pos, eval (gametree))) (nextMoves tree)
-                bestScore = maximum (map (snd) scores)
-                bestPos = filter (\move -> (snd move) == bestScore) scores
-
-
 
 -- Update the world state after some time has passed
 updateWorld :: Float -- ^ time since last update
@@ -105,8 +85,8 @@ updateWorld t w | (network w) && (userCol w) /= col =  --read move from network,
                       newBoard = (game_board newTree) --get new board from the move associated with this tree
 
 chooseAI :: World -> GameTree-> (Position, GameTree)
-chooseAI world tree | (difficulty world) == "easy" = getBestMoveBadAI tree
-                    | otherwise = getBestMoveGoodAI 3 tree
+chooseAI world tree | (difficulty world) == "easy" = getBestMoveBadAI tree world
+                    | otherwise = getBestMoveGoodAI 3 tree world
 
 -- | Reads move from network 
 readNetwork :: World -> IO (Int, Int)
@@ -124,3 +104,17 @@ moveFromNetwork w | x /= (-1) && y /= (-1)=
   where (x,y) = (unsafePerformIO (readNetwork w))
         board = gameboard w
         col = turn w
+
+
+eval :: GameTree -> World -> Int
+eval tree w = evaluate board col w
+  where board = (game_board tree)
+        col = game_turn tree
+
+
+evalLayer :: GameTree -> World -> (Position, Int)
+evalLayer tree w = (head bestPos)
+  where scores = map (\(pos,gametree) -> (pos, eval (gametree) w)) (nextMoves tree)
+        bestScore = maximum (map (snd) scores)
+        bestPos = filter (\move -> (snd move) == bestScore) scores
+
