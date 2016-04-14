@@ -1,4 +1,4 @@
-module Board where
+module Board(evaluate, makeMove, inRange, isOccupied, allPositions, detectMoves, findPiece, other) where
 
 import Data.Maybe
 import Data.List

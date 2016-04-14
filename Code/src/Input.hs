@@ -1,7 +1,9 @@
 module Input(handleInput) where
 
 import Graphics.Gloss.Interface.Pure.Game
+import Graphics.Gloss.Data.Extent
 import Graphics.Gloss
+import Draw
 import Board
 import AI
 import Game
@@ -19,16 +21,18 @@ import Debug.Trace
 -- to stderr, which can worlde a very useful way of debugging!
 handleInput :: Event -> World -> World
 handleInput (EventMotion (x, y)) world
-    = trace ("Mouse moved to: " ++ show (x',y')) world
+    = trace ("Mouse moved to: " ++ show (x', y')) world
     where (x',y') = convertCoords x y
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
+  | coordInExtent (undoExtent board) (x',y') && validUndo world x' y' = unsafePerformIO (undoMove world)
+  | coordInExtent (hintsExtent board) (x',y') = world {hints = (not (hints world))}
+
   | validNetworkMove world x' y' = unsafePerformIO (moveOverNetwork world x' y')
 
   | validGameMove world x' y' = case makeMove board (turn world) (x',y') of
       (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
       (Nothing) -> world --invalid move. Don't change turns
 
-  | validUndo world x' y' = unsafePerformIO (undoMove world) --click outside the board undoes a move
   | otherwise = world --game is over, don't update world
   where (x',y') = convertCoords x y
         newCol = other (turn world)
@@ -47,7 +51,6 @@ handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
           newCol = other (turn world)
 
 handleInput (EventKey (Char k) Up _ _) world
-  | k == 'h' = world {hints = (not (hints world))}
   | k == 'r' = world {gameboard = (board {reversi = rev})}
   | otherwise = world
   where rev = not (reversi (gameboard world))
@@ -68,6 +71,7 @@ convertCoords x y | y < 0 && x < 0 = (x'-1, y' -1)
         y' = truncate (y / 50) + 4
 
 -------------------------------------------------------------------
+--Valid Move functions
 validNetworkMove :: World -> Int -> Int -> Bool
 validNetworkMove world x y = not (gameOver board) && (userCol world) == (turn world)
   && network world && inRange board (x, y)

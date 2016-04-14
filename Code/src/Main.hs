@@ -7,7 +7,6 @@ import Draw
 import Input
 import AI
 import Game
-
 -- 'play' starts up a graphics window and sets up handlers for dealing
 -- with inputs and updating the world state.
 --
@@ -27,7 +26,7 @@ main = do tile <- loadBMP "../tile.bmp"
           whitePiece <- loadBMP "../white-piece.bmp"
           movePiece <- loadBMP "../move.bmp"
           args <- getArgs
-          play (InWindow "Othello" (1080, 600) (10, 10)) black 10
+          play (InWindow "Othello" (1200, 600) (10, 10)) black 10
             (initWorld args)
             (drawWorld (tile, blackPiece, whitePiece, movePiece)) -- in Draw.hs
             handleInput -- in Input.hs
