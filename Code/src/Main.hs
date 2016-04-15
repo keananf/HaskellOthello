@@ -3,7 +3,6 @@ module Main where
 import Graphics.Gloss
 import Graphics.Gloss.Juicy
 import System.Environment
-import Board
 import Draw
 import Input
 import AI

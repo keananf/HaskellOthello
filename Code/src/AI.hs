@@ -72,7 +72,8 @@ updateWorld :: Float -- ^ time since last update
             -> World -- ^ current world state
             -> World
 updateWorld t w | gameOver (gameboard w) = w {gameState=GameOver}
-                | (network w) && (userCol w) /= col =  --read move from network, update world
+                  --read move from network, update world
+                | (network w) && (userCol w) /= col && gameState w == Playing =
                     moveFromNetwork w
 
                 --ai v player
