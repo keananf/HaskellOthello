@@ -1,14 +1,33 @@
-module Draw(drawWorld, menuExtent, undoExtent, hintsExtent, playExtent, aiExtent, aiEasyExtent, aiMedExtent) where
+module Draw
+(
+ drawWorld
+,menuExtent
+,undoExtent
+,hintsExtent
+,playExtent
+,aiExtent
+,aiEasyExtent
+,aiMedExtent
+,pictureOrBlank
+,Atlas(..)
+) where
 
 import Graphics.Gloss
 import Graphics.Gloss.Data.Extent
+import Data.Maybe
 import Board
 import Game
 
-type Types = (Picture, Picture, Picture, Picture)
+data Atlas = Atlas { background :: Picture
+                   , sidePanel :: Picture
+                   , tile :: Picture
+                   , blackPiece :: Picture
+                   , whitePiece :: Picture
+                   , hintPiece :: Picture }
 
 -- This extracts the Board from the world state and draws it
 -- as a grid plus pieces.
+<<<<<<< HEAD
 drawWorld :: Types -> World -> IO Picture
 drawWorld tiles world | (gameState world) == Playing =
                           return (scale sf sf picture) --draw board if not game over
@@ -18,35 +37,46 @@ drawWorld tiles world | (gameState world) == Playing =
 
                       | otherwise =
                           return (scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score))))
+=======
+drawWorld :: Atlas -> World -> Picture
+drawWorld atlas world | (gameState world) == Playing = scale sf sf picture --draw board if not game over
+                      | (gameState world) == Menu = scale sf sf (drawMenu b)
+                      | (gameState world) == Paused = scale sf sf (pictures ((drawPause b) ++ (map (centreImg) score)))
+                      | otherwise = scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score)))
+>>>>>>> 96165491840f5d24f0de00ac30ba2721ccf9347f
   where b = gameboard world
-        boardTiles = (getTiles b world tiles) --list of pictures representing the tiles
+        boardTiles = (getTiles b world atlas) --list of pictures representing the tiles
         score = drawScore world
+        bg = translate (350) (350) (background atlas)
+        sp = translate (350) (350) (sidePanel atlas)
         turnImg = drawTurn world
-        picture = centreImg (pictures(turnImg:(score ++ boardTiles ++(drawButtons b))))
+        picture = centreImg ( pictures ([bg, sp, turnImg] ++ score ++ boardTiles ++ (drawButtons b)) )
 
 -- | Retrieves a list of each individual picture representing
 -- | each tile
-getTiles :: Board -> World -> Types -> [Picture]
-getTiles board world types = [getTile world board (x,y) types | x <- [0..len], y <- [0..len]]
+getTiles :: Board -> World -> Atlas -> [Picture]
+getTiles board world atlas = [getTile world board (x,y) atlas | x <- [0..len], y <- [0..len]]
   where len = (size board) - 1
 
 
--- | Figure out each type of tile and return the Picture that needs to be printed
-getTile :: World -> Board -> (Int,Int) -> Types -> Picture
-getTile world board (x,y) (tile, blackPiece, whitePiece, movePiece) =
-  case (findPiece board (x,y)) of --if a piece exists at these coordinates
-    (Just piece) -> translate x' y' (getColour (blackPiece, whitePiece) piece)
-    (Nothing) -> translate x' y' (checkValidMove board world x y (tile, movePiece))
+-- | for the particular tile location create the appropriate picture
+getTile :: World -> Board -> (Int,Int) -> Atlas -> Picture
+getTile world board (x,y) atlas = pictures [
+           translate x' y' (checkValidMove board world x y (hintPiece atlas)),
+           ( case (findPiece board (x,y)) of
+               Just piece -> translate x' y' (getColour (blackPiece atlas, whitePiece atlas) piece)
+               Nothing    -> Blank ),
+           translate x' y' (tile atlas)]
   where pos' = getOffset (x,y)
         x' = fromIntegral (fst pos') --convert to float
         y' = fromIntegral (snd pos')
 
 -- check if the tile at the given coordinates represents a potential valid move
 -- so that a hint can be displayed (if active). Otherwise, just print an empty tile
-checkValidMove :: Board -> World -> Int -> Int -> (Picture,Picture) -> Picture
-checkValidMove board world x y (tile, moveTile)
+checkValidMove :: Board -> World -> Int -> Int -> Picture -> Picture
+checkValidMove board world x y moveTile
   | any (==(x,y)) potentialMoves  && (hints world) = moveTile
-  | otherwise = tile
+  | otherwise = Blank
   where potentialMoves = detectMoves board col (allPositions board)
         col = turn world
 
@@ -169,7 +199,7 @@ aiMedExtent b = makeExtent (2) (1) (11) (7)
 
 -------------------------------------------------------------
 -- | return correct image that corresponds with a piece's colour
-getColour :: (Picture, Picture) -> Piece ->Picture
+getColour :: (Picture, Picture) -> Piece -> Picture
 getColour (blackPiece, whitePiece) piece | (snd piece) == Black = blackPiece
                                          | (snd piece) == White = whitePiece
 
@@ -193,4 +223,7 @@ backgroundSize board = fromIntegral( sizeOfTile * (size board))
 centreImg :: Picture -> Picture
 centreImg board= translate (-350.0) (-350.0) board
 
-
+-- | return Just pic or a Blank Picture, depending on the passed Maybe Picture
+pictureOrBlank :: Maybe Picture -> Picture
+pictureOrBlank (Just pic) = pic
+pictureOrBlank Nothing = Blank

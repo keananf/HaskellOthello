@@ -1,6 +1,6 @@
 CC=ghc
 
-haskellothello: Main.hs
+haskellothello: *.hs
 	${CC} -o haskellothello Main.hs
 
 clean:
