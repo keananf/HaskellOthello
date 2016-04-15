@@ -1,9 +1,7 @@
-<<<<<<< HEAD
-module Draw(drawWorld, menuExtent, undoExtent, hintsExtent, playExtent, aiExtent, aiEasyExtent, aiMedExtent) where
-=======
 module Draw
 (
  drawWorld
+,menuExtent
 ,undoExtent
 ,hintsExtent
 ,playExtent
@@ -13,7 +11,6 @@ module Draw
 ,pictureOrBlank
 ,Atlas(..)
 ) where
->>>>>>> added atlas type, integrated assets but need options now
 
 import Graphics.Gloss
 import Graphics.Gloss.Data.Extent
@@ -36,15 +33,10 @@ drawWorld atlas world | (gameState world) == Playing = scale sf sf picture --dra
                       | (gameState world) == Paused = scale sf sf (pictures ((drawPause b) ++ (map (centreImg) score)))
                       | otherwise = scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score)))
   where b = gameboard world
-<<<<<<< HEAD
         boardTiles = (getTiles b world atlas) --list of pictures representing the tiles
         score = drawScore world
-=======
         bg = translate (350) (350) (background atlas)
         sp = translate (350) (350) (sidePanel atlas)
-        boardTiles = (getTiles b world atlas) --list of pictures representing the tiles
-        score = drawScore world
->>>>>>> added atlas type, integrated assets but need options now
         turnImg = drawTurn world
         picture = centreImg ( pictures ([bg, sp, turnImg] ++ score ++ boardTiles ++ (drawButtons b)) )
 
