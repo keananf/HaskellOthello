@@ -1,7 +1,8 @@
 CC=ghc
 
-othello: Main.hs
-	${CC} -o othello Main.hs
+haskellothello: Main.hs
+	${CC} -o haskellothello Main.hs
 
 clean:
-	rm -f *.hi *.o othello
+	rm -f *.hi *.o haskellothello
+	rm -rf dist
