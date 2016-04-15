@@ -55,7 +55,7 @@ handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
           newCol = other (turn world)
 
 handleInput (EventKey (Char k) Up _ _) world
-  | k == 'r' = world {gameboard = (board {reversi = rev})}
+  | k == 'r' && not (network world )= world {gameboard = (board {reversi = rev})}
   | k == 'p' && (gameState world) == Paused = world {gameState = Playing} --unpause
   | k == 'p' && (gameState world) == Playing = world {gameState = Paused} --pause
   | otherwise = world

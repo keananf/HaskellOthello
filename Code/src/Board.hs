@@ -27,8 +27,8 @@ makeMove board col pos | validMove = Just newBoard
         -- | Detects a valid move given the rule set
         validMove :: Bool
         validMove = not (isOccupied board pos) && (inRange board pos) --in range and open space
-          && ((reversi board && length (pieces board) < 8) -- allow first 4 moves to not require flips
-              || length flippedPieces > 0) --if not reversi, have to flip for legal move
+          && ((reversi board && validReversi board pos && length flippedPieces == 0)
+              || (not (validReversi board pos) && length flippedPieces > 0)) --if not reversi, have to flip for legal move
 
 
 updatePieces :: Board -> [Piece] -> Position -> Col -> Board
@@ -73,6 +73,8 @@ findPiece board pos | length list == 1 = Just (head list)
 
 
 -----------------------------------------------------------------
+-- | Following functions ascertain if a move is valid
+
 -- | Check if the space is occupied
 isOccupied :: Board -> Position -> Bool
 isOccupied board pos = any (== pos) positions
@@ -82,6 +84,15 @@ isOccupied board pos = any (== pos) positions
 inRange :: Board -> Position -> Bool
 inRange board (x,y) = x < len && x >= 0 && y < len && y >= 0
   where len = (size board)
+
+validReversi :: Board -> Position-> Bool
+validReversi board pos | x <= len `div` 2 && x >= len `div` 2 -1
+                         && y <= len `div` 2 && y >= len `div` 2 -1
+                         && length (pieces board) < 4 = True
+                       | otherwise = False
+  where x = fst pos
+        y = snd pos
+        len = size board
 
 ----------------------------------------------------------------
 --Following functions for checking which tiles are valid moves
@@ -95,8 +106,10 @@ allPositions board =  [(x,y) | x <- [0..len-1], y <- [0..len-1]]
 -- | detect for each position on the board which ones result in valid moves
 detectMoves :: Board -> Col -> [Position] ->[Position]
 detectMoves board col [] = []
-detectMoves board col (x:xs) | (reversi board && length (pieces board) < 8) = x:xs
-                             | length flippedPieces >= 1 = [x] ++ positions
+detectMoves board col (x:xs) | (validReversi board x)
+                               && length flippedPieces ==0 = [x] ++ positions
+                             | length (pieces board) >= 4
+                               && length flippedPieces >= 1 = [x] ++ positions
                              | otherwise = positions
   where flippedPieces = flipPieces board col x
         positions = detectMoves board col xs

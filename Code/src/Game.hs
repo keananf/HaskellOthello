@@ -46,13 +46,14 @@ data World = World { gameboard :: Board,
                      turn :: Col }
 
 initBoard :: Bool -> Int -> Board
-initBoard reversi size = Board size 0 reversi [((3,4), Black), ((4,4), White),
-                       ((3,3), White), ((4,3), Black)]
+initBoard reversi size | reversi== False = Board size 0 reversi [((3,4), Black), ((4,4), White),
+                                                                 ((3,3), White), ((4,3), Black)]
+                       | otherwise = Board size 0 reversi []
 
 initWorld :: [String] -> World
 initWorld args = World board Menu world hints ai difficulty network
   (unsafePerformIO getHandle) aiCol userCol args Black
-  where board = initBoard (isReversi args) (checkSize args)
+  where board = initBoard (isReversi args network) (checkSize args)
         hints = hasHints args
         ai = hasAI args
         network = hasNetwork args
@@ -85,9 +86,9 @@ getHandle = do
 -- | Check to see if the user wishes to play the game with the
 -- | reversi rule set, that is, that the first two moves by each colour
 -- | don't need to result in a flip.
-isReversi :: [String] -> Bool
-isReversi arguments | length arguments >= 1 && any (== "reversi") arguments = True
-                    | otherwise = False
+isReversi :: [String] -> Bool -> Bool
+isReversi arguments net| length arguments >= 1 && net == False && any (== "reversi") arguments = True
+                       | otherwise = False
 
 
 -- | Read first command line argument for board size, if it is present
@@ -130,8 +131,12 @@ gameOver board | (passes board) == 2 = True
 
 -- | Attempts to undo a move given the particular type of game
 undoMove :: World -> IO World
-undoMove world | network world && userColour == col= do let newWorld = oldworld (oldworld world)
-                                                        sendAcrossNetwork networkHandle (-2) (-2)
+undoMove world -- | network world && userColour == col= do let newWorld = oldworld (oldworld world)
+               --                                         sendAcrossNetwork networkHandle (-2) (-2)
+                --                                        return newWorld
+                --prevent undos if it will roll back to the menu
+               | gameState (oldworld world) == Menu =do let newWorld = world
+                                                        print ""
                                                         return newWorld
                | not (ai world) = do let newWorld = oldworld world--undoes move for player v player
                                      print ""

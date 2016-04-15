@@ -71,9 +71,9 @@ getBestMoveGoodAI i tree w = head bestMove
 updateWorld :: Float -- ^ time since last update
             -> World -- ^ current world state
             -> World
-updateWorld t w | gameOver (gameboard w) = w {gameState=GameOver}
+updateWorld t w | gameOver board = w {gameState=GameOver}
                   --read move from network, update world
-                | (network w) && (userCol w) /= col && gameState w == Playing =
+                | (network w) && (userCol w) /= col && state == Playing =
                     moveFromNetwork w
 
                 --ai v player
@@ -104,12 +104,13 @@ readNetwork world = do
 
 -- |Processes move received from network
 moveFromNetwork :: World -> World
-moveFromNetwork w | x == (-3) && y == (-3) = w {turn = col, ai = True, aiCol = col, network = False}
+moveFromNetwork w | x == (-3) && y == (-3) = w {turn = col, oldworld = initWorld (args w),
+                                                ai = True, aiCol = col, network = False}
                   | x /= (-1) && y /= (-1)= --not a pass
                         case makeMove board col (x,y) of
                           (Just newBoard') -> w {gameboard =  newBoard', turn = other col, oldworld = w}
                           (Nothing) -> w {turn = other col, oldworld = w}
-                  | otherwise = w {turn = other col, oldworld = w}
+                  | otherwise = w {turn = other col, oldworld = w} --pass
   where (x,y) = (unsafePerformIO (readNetwork w))
         board = gameboard w
         col = turn w
