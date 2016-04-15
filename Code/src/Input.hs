@@ -22,23 +22,24 @@ import Debug.Trace
 handleInput :: Event -> World -> World
 handleInput (EventMotion (x, y)) world
   =trace ("Mouse moved to: " ++ show (x', y')) world
-  where (x',y') = convertCoords x y
+  where (x',y') = convertCoords (gameboard world) x y
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
   | (gameState world) == Paused = world --ignore input until it is not paused
   | (gameState world) == Menu = handleMenuInput x' y' world
+
   | coordInExtent (undoExtent board) (x',y') && validUndo world x' y' = unsafePerformIO (undoMove world)
   | coordInExtent (hintsExtent board) (x',y') = world {hints = (not (hints world))}
-  | coordInExtent (menuExtent board) (x',y') = initWorld (args world)
+  | coordInExtent (menuExtent board) (x',y') && not (network world)= initWorld (args world)
 
   | validNetworkMove world x' y' = unsafePerformIO (moveOverNetwork world x' y')
 
   | validGameMove world x' y' = case makeMove board (turn world) (x',y') of
-      (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world}
+      (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world, time = 10.0}
       (Nothing) -> world --invalid move. Don't change turns
 
   | gameOver board = world {gameState = GameOver} --game is over, don't update world
   | otherwise = world --click out of range, or other undefined behaviour is ignored
-  where (x',y') = convertCoords x y
+  where (x',y') = convertCoords board x y
         newCol = other (turn world)
         board = gameboard world
 
@@ -51,14 +52,14 @@ handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
     | (network world) && not (gameOver board) = unsafePerformIO (passOverNetwork world)
     | otherwise = initWorld (args world)--Reset game when gameover and space pressed
     where board = gameboard world
-          numPasses = passes board
-          newBoard = board {passes = numPasses + 1}
+          newBoard = board {passes = (passes board) + 1}
           newCol = other (turn world)
 
 handleInput (EventKey (Char k) Up _ _) world
   | k == 'r' && not (network world )= world {gameboard = (board {reversi = rev})}
   | k == 'p' && (gameState world) == Paused = world {gameState = Playing} --unpause
-  | k == 'p' && (gameState world) == Playing = world {gameState = Paused} --pause
+  | k == 'p' && (gameState world)== Playing && not (network world)=
+      world {gameState = Paused} --pause
   | otherwise = world
   where rev = not (reversi (gameboard world))
         board = gameboard world
@@ -77,12 +78,12 @@ handleMenuInput x y world| coordInExtent (playExtent board) (x, y) = world {game
 
 -- | convert the coordinates (with original origin at the center)
 -- | to be integers 0 - 7 and with the origin starting in the bottom left
-convertCoords :: Float -> Float -> Position
-convertCoords x y | y < 0 && x < 0 = (x'-1, y' -1)
-                  | y >= 0 && x < 0 = (x'-1, y')
-                  | y < 0 = (x', y'-1)
-                  | x < 0 = (x'-1, y')
-                  | otherwise = (x', y')
+convertCoords :: Board -> Float -> Float -> Position
+convertCoords b x y | y < 0 && x < 0 = (x'-1, y' -1)
+                    | y >= 0 && x < 0 = (x'-1, y')
+                    | y < 0 = (x', y'-1)
+                    | x < 0 = (x'-1, y')
+                    | otherwise = (x', y')
   where x' = truncate (x / 50) + 4
         y' = truncate (y / 50) + 4
 

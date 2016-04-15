@@ -43,17 +43,18 @@ data World = World { gameboard :: Board,
                      aiCol :: Col, --ai colour
                      userCol :: Col, --user colour
                      args :: [String], --all args passed in
+                     time :: Float,
                      turn :: Col }
 
-initBoard :: Bool -> Int -> Board
-initBoard reversi size | reversi== False = Board size 0 reversi [((3,4), Black), ((4,4), White),
-                                                                 ((3,3), White), ((4,3), Black)]
-                       | otherwise = Board size 0 reversi []
+initBoard :: Bool -> Board
+initBoard reversi | reversi== False = Board 8 0 reversi [((3,4), Black), ((4,4), White),
+                                                         ((3,3), White), ((4,3), Black)]
+                  | otherwise = Board 8 0 reversi []
 
 initWorld :: [String] -> World
 initWorld args = World board Menu world hints ai difficulty network
-  (unsafePerformIO getHandle) aiCol userCol args Black
-  where board = initBoard (isReversi args network) (checkSize args)
+  (unsafePerformIO getHandle) aiCol userCol args 10.0 Black
+  where board = initBoard (isReversi args network)
         hints = hasHints args
         ai = hasAI args
         network = hasNetwork args
@@ -89,14 +90,6 @@ getHandle = do
 isReversi :: [String] -> Bool -> Bool
 isReversi arguments net| length arguments >= 1 && net == False && any (== "reversi") arguments = True
                        | otherwise = False
-
-
--- | Read first command line argument for board size, if it is present
--- | otherwise return the default of 8
-checkSize :: [String] -> Int
-checkSize arguments | length nums >= 1 = read (head nums) :: Int
-                    | otherwise = 8 --default board size
-                    where nums = filter (\arg -> all isDigit arg) arguments
 
 hasHints :: [String] -> Bool
 hasHints arguments | length arguments >= 1 && any (=="hints") arguments = True
@@ -138,12 +131,12 @@ undoMove world -- | network world && userColour == col= do let newWorld = oldwor
                | gameState (oldworld world) == Menu =do let newWorld = world
                                                         print ""
                                                         return newWorld
-               | not (ai world) = do let newWorld = oldworld world--undoes move for player v player
+               | not (ai world) = do let newWorld = oldworld world --undoes move for player v player
                                      print ""
-                                     return newWorld
+                                     return newWorld{time=10.0}
                | otherwise = do let newWorld = oldworld (oldworld world) --undoes for ai v player
                                 print ""
-                                return newWorld
+                                return newWorld{time=10.0}
                where networkHandle = handle world
                      userColour = userCol world
                      col = turn world

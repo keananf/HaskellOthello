@@ -16,7 +16,7 @@ drawWorld tiles world | (gameState world) == Playing = scale sf sf picture --dra
                       | otherwise = scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score)))
   where b = gameboard world
         boardTiles = (getTiles b world tiles) --list of pictures representing the tiles
-        score = drawScore b
+        score = drawScore world
         turnImg = drawTurn world
         picture = centreImg (pictures(turnImg:(score ++ boardTiles ++(drawButtons b))))
 
@@ -90,13 +90,14 @@ drawTurn world = (color white pic)
         centre = (backgroundSize (gameboard world)) / 2 - fromIntegral(sizeOfTile) --x y from right
 
 -- | Prints the Score of each colour to the right of the board
-drawScore :: Board -> [Picture]
-drawScore board = map (\pic -> (color white pic)) pics
-  where scores = checkScore board
-        len = backgroundSize board
+drawScore :: World -> [Picture]
+drawScore w = map (\pic -> (color white pic)) pics
+  where scores = checkScore (gameboard w)
+        len = backgroundSize (gameboard w)
         score1 = translate (len) (len-(0.25 *len)) (scale sf sf(text ("Black: " ++ show(fst scores))))
-        score2 = translate (len) (len-(0.75*len)) (scale sf sf(text ("White: " ++ show(snd scores))))
-        pics = (score1:[score2])
+        score2 = translate (len) (len-(0.5*len)) (scale sf sf(text ("White: " ++ show(snd scores))))
+        timeLeft = translate (len) (len-(0.75*len)) (scale sf sf(text ("Time: " ++ show(truncate(time w)))))
+        pics = [score1,score2, timeLeft]
 
 ---------------------------------------------------------------
 --Buttons
@@ -113,7 +114,7 @@ menuButton board = translate  (len-1.35*len) (len-(0.5 *len)) (scale sf sf (text
   where len = backgroundSize board
 
 hintsButton :: Board -> Picture
-hintsButton board = translate  (len-1.35*len) (len-(0.75 *len)) (scale sf sf (text ("HINTS")))
+hintsButton board = translate  (len-1.35*len)  (len-(0.75 *len))(scale sf sf (text ("HINTS")))
   where len = backgroundSize board
 
 
@@ -121,16 +122,28 @@ hintsButton board = translate  (len-1.35*len) (len-(0.75 *len)) (scale sf sf (te
 --Extents
 
 undoExtent :: Board -> Extent
-undoExtent b = makeExtent 7 6 (0) (-3)
+undoExtent b = makeExtent 7 6 0 (-3)
   where len = backgroundSize b
+        ymin = truncate(len-(0.25*len))
+        ymax = ymin + sizeOfTile `div` 2
+        xmin = truncate(len-1.35*len)
+        xmax = 0
 
 menuExtent :: Board -> Extent
-menuExtent b = makeExtent (5) (4) (0) (-3)
+menuExtent b = makeExtent 5 4 0 (-3)
   where len = backgroundSize b
+        ymin = truncate(len-(0.5*len))
+        ymax = ymin + sizeOfTile `div` 2
+        xmin = truncate(len-1.35*len)
+        xmax = 0
 
 hintsExtent :: Board -> Extent
-hintsExtent b = makeExtent (3) (2) (0) (-3)
+hintsExtent b = makeExtent 3 2 0 (-3)
   where len = backgroundSize b
+        ymin = truncate (((0.75*len)-len))
+        ymax = ymin + sizeOfTile `div` 2
+        xmin = truncate ((len-1.35*len))
+        xmax = 0
 
 playExtent :: Board -> Extent
 playExtent b = makeExtent (0) (-2) (5) (3)

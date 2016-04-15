@@ -72,17 +72,20 @@ updateWorld :: Float -- ^ time since last update
             -> World -- ^ current world state
             -> World
 updateWorld t w | gameOver board = w {gameState=GameOver}
+                | (time w) <= 0.0 = w {turn = other (turn w), oldworld = w, time = 10.0}
                   --read move from network, update world
                 | (network w) && (userCol w) /= col && state == Playing =
                     moveFromNetwork w
 
                 --ai v player
                 | state==Playing && hasAI && aiColour == col && length (nextMoves tree) > 0 =
-                    w {gameboard = newBoard, turn = other col, oldworld = w}
+                    w {gameboard = newBoard, turn = other col, oldworld = w, time=10.0}
 
                 | state==Playing && hasAI && aiColour == col = --ai has to pass
-                  w {turn = other col, oldworld = w}
-                | otherwise = w --player v player or game not started yet
+                  w {turn = other col, oldworld = w, time=10.0}
+                | state == Menu = w --game not started yet
+                | state==Paused = w 
+                | otherwise = w {time = (time w) - 0.1} --player v player
                 where aiColour = aiCol w
                       col = turn w
                       hasAI = ai w
