@@ -19,51 +19,50 @@ import Debug.Trace
 -- trace :: String -> a -> a
 -- 'trace' returns its second argument while printing its first argument
 -- to stderr, which can worlde a very useful way of debugging!
-handleInput :: Event -> World -> World
-handleInput (EventMotion (x, y)) world
-  =trace ("Mouse moved to: " ++ show (x', y')) world
-  where (x',y') = convertCoords (gameboard world) x y
+handleInput :: Event -> World -> IO World
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
-  | (gameState world) == Paused = world --ignore input until it is not paused
-  | (gameState world) == Menu = handleMenuInput x' y' world
+  | (gameState world) == Paused = return world --ignore input until it is not paused
+  | (gameState world) == Menu = return (handleMenuInput x' y' world)
 
-  | coordInExtent (undoExtent board) (x',y') && validUndo world x' y' = unsafePerformIO (undoMove world)
-  | coordInExtent (hintsExtent board) (x',y') = world {hints = (not (hints world))}
-  | coordInExtent (menuExtent board) (x',y') && not (network world)= initWorld (args world)
+    --Functionality for buttons
+  | coordInExtent (menuExtent board) (x',y') && not (network world)= return (initWorld (args world))
+  | coordInExtent (undoExtent board) (x',y') && validUndo world x' y' = undoMove world
+  | coordInExtent (hintsExtent board) (x',y') = return world {hints = (not (hints world))}
 
-  | validNetworkMove world x' y' = unsafePerformIO (moveOverNetwork world x' y')
+  | validNetworkMove world x' y' = (moveOverNetwork world x' y')
 
   | validGameMove world x' y' = case makeMove board (turn world) (x',y') of
-      (Just newBoard') -> world {gameboard = newBoard', turn = newCol, oldworld = world, time = 10.0}
-      (Nothing) -> world --invalid move. Don't change turns
+      (Just newBoard') -> return world {gameboard = newBoard', turn = newCol,
+                                        oldworld = world, time = 10.0}
+      (Nothing) -> return world --invalid move. Don't change turns
 
-  | gameOver board = world {gameState = GameOver} --game is over, don't update world
-  | otherwise = world --click out of range, or other undefined behaviour is ignored
+  | gameOver board = return world {gameState = GameOver} --game is over, don't update world
+  | otherwise = return world --click out of range, or other undefined behaviour is ignored
   where (x',y') = convertCoords board x y
         newCol = other (turn world)
         board = gameboard world
 
 
-handleInput (EventKey (SpecialKey KeySpace) Down _ _) world
-    = trace ("Space key down") world
 handleInput (EventKey (SpecialKey KeySpace) Up _ _) world
-    | (gameState world) == Paused = world --ignore space on pause
-    | not (network world) && not (gameOver board) = world {gameboard = newBoard, oldworld = world, turn = newCol}
-    | (network world) && not (gameOver board) = unsafePerformIO (passOverNetwork world)
-    | otherwise = initWorld (args world)--Reset game when gameover and space pressed
+    | (gameState world) == Paused = return world --ignore space on pause
+    | not (network world) && not (gameOver board) = return world {gameboard = newBoard,
+                                                                  oldworld = world, turn = newCol}
+    | (network world) && not (gameOver board) = (passOverNetwork world)
+    | otherwise = return (initWorld (args world))--Reset game when gameover and space pressed
     where board = gameboard world
           newBoard = board {passes = (passes board) + 1}
           newCol = other (turn world)
 
 handleInput (EventKey (Char k) Up _ _) world
-  | k == 'r' && not (network world )= world {gameboard = (board {reversi = rev})}
-  | k == 'p' && (gameState world) == Paused = world {gameState = Playing} --unpause
+  | k == 'r' && not (network world )= return world {gameboard = (board {reversi = rev})}
+  | k == 'p' && (gameState world) == Paused = return world {gameState = Playing} --unpause
   | k == 'p' && (gameState world)== Playing && not (network world)=
-      world {gameState = Paused} --pause
-  | otherwise = world
+      return world {gameState = Paused} --pause
+  | otherwise = return world
   where rev = not (reversi (gameboard world))
         board = gameboard world
-handleInput e world = world
+
+handleInput e world = return world
 
 
 ------------------------------------------------------------------------
@@ -107,19 +106,17 @@ validUndo world x y = not (inRange board (x, y)) && not (gameOver board) && not 
 
 --sends a pass over the network
 passOverNetwork :: World -> IO World
-passOverNetwork world = do let newWorld = world {oldworld = world, turn = other (turn world)}
-                           sendAcrossNetwork (handle world) (-1) (-1)
-                           return newWorld
+passOverNetwork world = do hand <- (handle world)
+                           sendAcrossNetwork hand (-1) (-1)
+                           return world {oldworld = world, turn = other (turn world)}
 
 -- | Makes a move and attempts to send it across the network
 moveOverNetwork :: World -> Int -> Int -> IO World
 moveOverNetwork world x y = case makeMove board col (x,y) of --make move and send across network
-    (Just newBoard') -> do let newWorld = world {gameboard = newBoard', turn = newCol, oldworld = world}
-                           sendAcrossNetwork (handle world) x y
-                           return newWorld
-    (Nothing) -> do let newWorld = world --bad move, dont update world
-                    print ""
-                    return newWorld
+    (Just newBoard') -> do hand <- (handle world)
+                           sendAcrossNetwork hand x y
+                           return world {gameboard = newBoard', turn = newCol, oldworld = world}
+    (Nothing) -> return world --bad move, dont update world
     where board = gameboard world
           col = turn world
           newCol = other col

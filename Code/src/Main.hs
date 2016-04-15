@@ -1,6 +1,6 @@
 module Main where
 
-import Graphics.Gloss
+import Graphics.Gloss.Interface.IO.Game
 import Graphics.Gloss.Juicy
 import System.Environment
 import Draw
@@ -26,7 +26,7 @@ main = do tile <- loadBMP "../tile.bmp"
           whitePiece <- loadBMP "../white-piece.bmp"
           movePiece <- loadBMP "../move.bmp"
           args <- getArgs
-          play (InWindow "Othello" (1200, 600) (10, 10)) black 10
+          playIO (InWindow "Othello" (1200, 600) (10, 10)) black 10
             (initWorld args)
             (drawWorld (tile, blackPiece, whitePiece, movePiece)) -- in Draw.hs
             handleInput -- in Input.hs

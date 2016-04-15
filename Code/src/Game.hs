@@ -2,7 +2,6 @@ module Game where
 
 import Data.Char
 import System.IO
-import System.IO.Unsafe
 import ClientMain
 
 data Col = Black | White
@@ -39,11 +38,11 @@ data World = World { gameboard :: Board,
                      ai :: Bool, --if ai is on
                      difficulty :: Int, --difficulty of ai
                      network :: Bool, --if network is on
-                     handle :: Handle, --handle representing network connection
+                     handle :: IO Handle, --handle representing network connection
                      aiCol :: Col, --ai colour
                      userCol :: Col, --user colour
                      args :: [String], --all args passed in
-                     time :: Float,
+                     time :: Float, --time remaining for this turn
                      turn :: Col }
 
 initBoard :: Bool -> Board
@@ -52,16 +51,17 @@ initBoard reversi | reversi== False = Board 8 0 reversi [((3,4), Black), ((4,4),
                   | otherwise = Board 8 0 reversi []
 
 initWorld :: [String] -> World
-initWorld args = World board Menu world hints ai difficulty network
-  (unsafePerformIO getHandle) aiCol userCol args 10.0 Black
+initWorld args = do let handle = client "localhost" 4024
+                    (World board Menu oldWorld hints ai difficulty network
+                     handle aiCol userCol args 10.0 Black)
   where board = initBoard (isReversi args network)
+        oldWorld = initWorld args
         hints = hasHints args
         ai = hasAI args
         network = hasNetwork args
         difficulty = aiDifficulty args
         userCol = userColour args
         aiCol = opp userCol
-        world = initWorld args
 
 userColour :: [String] -> Col
 userColour arguments | length arguments >= 1 && any (=="user=white") arguments = White
@@ -78,11 +78,6 @@ hasAI arguments | length arguments >= 1 && any (=="ai") arguments = True
 hasNetwork :: [String] -> Bool
 hasNetwork arguments | length arguments >= 1 && any (=="network") arguments = True
                 | otherwise = False
-
-getHandle :: IO Handle
-getHandle = do
-  handle <- client "localhost" 4024
-  return (handle)
 
 -- | Check to see if the user wishes to play the game with the
 -- | reversi rule set, that is, that the first two moves by each colour
@@ -127,16 +122,12 @@ undoMove :: World -> IO World
 undoMove world -- | network world && userColour == col= do let newWorld = oldworld (oldworld world)
                --                                         sendAcrossNetwork networkHandle (-2) (-2)
                 --                                        return newWorld
-                --prevent undos if it will roll back to the menu
-               | gameState (oldworld world) == Menu =do let newWorld = world
-                                                        print ""
-                                                        return newWorld
                | not (ai world) = do let newWorld = oldworld world --undoes move for player v player
-                                     print ""
+                                     print "Undoing"
                                      return newWorld{time=10.0}
-               | otherwise = do let newWorld = oldworld (oldworld world) --undoes for ai v player
-                                print ""
-                                return newWorld{time=10.0}
+               | otherwise = do let oldWorld = (oldworld (oldworld world)) --undoes for ai v player
+                                print "Undoing"
+                                return oldWorld{time=10.0}
                where networkHandle = handle world
                      userColour = userCol world
                      col = turn world

@@ -9,11 +9,15 @@ type Types = (Picture, Picture, Picture, Picture)
 
 -- This extracts the Board from the world state and draws it
 -- as a grid plus pieces.
-drawWorld :: Types -> World -> Picture
-drawWorld tiles world | (gameState world) == Playing = scale sf sf picture --draw board if not game over
-                      | (gameState world) == Menu = scale sf sf (drawMenu b)
-                      | (gameState world) == Paused = scale sf sf (pictures ((drawPause b) ++ (map (centreImg) score)))
-                      | otherwise = scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score)))
+drawWorld :: Types -> World -> IO Picture
+drawWorld tiles world | (gameState world) == Playing =
+                          return (scale sf sf picture) --draw board if not game over
+                      | (gameState world) == Menu = return (scale sf sf (drawMenu b))
+                      | (gameState world) == Paused =
+                          return (scale sf sf (pictures ((drawPause b) ++ (map (centreImg) score))))
+
+                      | otherwise =
+                          return (scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score))))
   where b = gameboard world
         boardTiles = (getTiles b world tiles) --list of pictures representing the tiles
         score = drawScore world

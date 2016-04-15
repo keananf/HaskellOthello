@@ -70,22 +70,22 @@ getBestMoveGoodAI i tree w = head bestMove
 -- Update the world state after some time has passed
 updateWorld :: Float -- ^ time since last update
             -> World -- ^ current world state
-            -> World
-updateWorld t w | gameOver board = w {gameState=GameOver}
-                | (time w) <= 0.0 = w {turn = other (turn w), oldworld = w, time = 10.0}
-                  --read move from network, update world
+            -> IO World
+updateWorld t w | gameOver board = return w {gameState=GameOver}
+                | (time w) <= 0.0 = return w {turn = other (turn w), oldworld = w, time = 10.0}
+                --read move from network, update world
                 | (network w) && (userCol w) /= col && state == Playing =
                     moveFromNetwork w
 
                 --ai v player
                 | state==Playing && hasAI && aiColour == col && length (nextMoves tree) > 0 =
-                    w {gameboard = newBoard, turn = other col, oldworld = w, time=10.0}
+                    return w {gameboard = newBoard, turn = other col, oldworld = w, time=10.0}
 
                 | state==Playing && hasAI && aiColour == col = --ai has to pass
-                  w {turn = other col, oldworld = w, time=10.0}
-                | state == Menu = w --game not started yet
-                | state==Paused = w 
-                | otherwise = w {time = (time w) - 0.1} --player v player
+                    return w {turn = other col, oldworld = w, time=10.0}
+                | state == Menu || state == Paused = return w --game not started yet or paused
+
+                | otherwise = return w {time = (time w) - 0.1} --player v player
                 where aiColour = aiCol w
                       col = turn w
                       hasAI = ai w
@@ -99,24 +99,23 @@ chooseAI :: World -> GameTree-> (Position, GameTree)
 chooseAI world tree | (difficulty world) == 1 = getBestMoveBadAI tree world --easy
                     | otherwise = getBestMoveGoodAI 3 tree world --medium
 
--- | Reads move from network
-readNetwork :: World -> IO (Int, Int)
-readNetwork world = do
-  (x,y) <-  readAcrossNetwork (handle world)
-  return (x,y)
-
 -- |Processes move received from network
-moveFromNetwork :: World -> World
-moveFromNetwork w | x == (-3) && y == (-3) = w {turn = col, oldworld = initWorld (args w),
-                                                ai = True, aiCol = col, network = False}
-                  | x /= (-1) && y /= (-1)= --not a pass
-                        case makeMove board col (x,y) of
-                          (Just newBoard') -> w {gameboard =  newBoard', turn = other col, oldworld = w}
-                          (Nothing) -> w {turn = other col, oldworld = w}
-                  | otherwise = w {turn = other col, oldworld = w} --pass
-  where (x,y) = (unsafePerformIO (readNetwork w))
-        board = gameboard w
+moveFromNetwork :: World -> IO World
+moveFromNetwork w = do hand <- (handle w)
+                       (x,y) <- readAcrossNetwork hand
+                       case (x,y) of
+                         (-3, -3) -> return w {turn = col, oldworld = oldWorld,
+                                               ai = True, aiCol = col, network = False}
+                           --not a pass
+                         (-1, -1) -> case makeMove board col (x,y) of
+                           (Just newBoard') ->
+                             return w {gameboard =  newBoard', turn = other col, oldworld = w}
+                           (Nothing) -> return w {turn = other col, oldworld = w}
+                         --pass
+                         (_,_) -> return w {turn = other col, oldworld = w}
+  where board = gameboard w
         col = turn w
+        oldWorld = initWorld (args w)
 
 -- | Evaluates a board for a given gametree
 eval :: GameTree -> World -> Int
