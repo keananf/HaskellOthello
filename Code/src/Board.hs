@@ -1,4 +1,4 @@
-module Board where
+module Board(evaluate, makeMove, inRange, isOccupied, allPositions, detectMoves, findPiece, other) where
 
 import Data.Maybe
 import Data.List
@@ -107,10 +107,14 @@ detectMoves board col (x:xs) | (reversi board && length (pieces board) < 8) = x:
 
 -- An evaluation function for a minimax search. Given a board and a colour
 -- return an integer indicating how good the board is for that colour.
-evaluate :: Board -> Col -> Int
-evaluate board col | col == Black = fst scores - snd scores
-                   | otherwise = snd scores - fst scores
+evaluate :: Board -> Col -> World -> Int
+evaluate board col w | col == userColour && userColour == Black = fst scores - snd scores
+                     | col /= userColour && userColour == Black = snd scores - fst scores
+                     | col == userColour && userColour == White = snd scores - fst scores
+                     | col /= userColour && userColour == White = fst scores - snd scores
+                     | otherwise = snd scores - fst scores
   where scores = checkScore board
+        userColour = userCol w
 
 
 
