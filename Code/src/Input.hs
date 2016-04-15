@@ -28,6 +28,7 @@ handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
   | (gameState world) == Menu = handleMenuInput x' y' world
   | coordInExtent (undoExtent board) (x',y') && validUndo world x' y' = unsafePerformIO (undoMove world)
   | coordInExtent (hintsExtent board) (x',y') = world {hints = (not (hints world))}
+  | coordInExtent (menuExtent board) (x',y') = initWorld (args world)
 
   | validNetworkMove world x' y' = unsafePerformIO (moveOverNetwork world x' y')
 

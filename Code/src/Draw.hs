@@ -1,4 +1,4 @@
-module Draw(drawWorld, undoExtent, hintsExtent, playExtent, aiExtent, aiEasyExtent, aiMedExtent) where
+module Draw(drawWorld, menuExtent, undoExtent, hintsExtent, playExtent, aiExtent, aiEasyExtent, aiMedExtent) where
 
 import Graphics.Gloss
 import Graphics.Gloss.Data.Extent
@@ -101,10 +101,15 @@ drawScore board = map (\pic -> (color white pic)) pics
 ---------------------------------------------------------------
 --Buttons
 drawButtons :: Board -> [Picture]
-drawButtons board = (undoButton board): [(hintsButton board)]
+drawButtons board = [(undoButton board), (menuButton board), (hintsButton board)]
 
 undoButton :: Board -> Picture
 undoButton board = translate  (len-1.35*len) (len-(0.25 *len)) (scale sf sf (text ("UNDO")))
+  where len = backgroundSize board
+
+
+menuButton :: Board -> Picture
+menuButton board = translate  (len-1.35*len) (len-(0.5 *len)) (scale sf sf (text ("MENU")))
   where len = backgroundSize board
 
 hintsButton :: Board -> Picture
@@ -117,6 +122,10 @@ hintsButton board = translate  (len-1.35*len) (len-(0.75 *len)) (scale sf sf (te
 
 undoExtent :: Board -> Extent
 undoExtent b = makeExtent 7 6 (0) (-3)
+  where len = backgroundSize b
+
+menuExtent :: Board -> Extent
+menuExtent b = makeExtent (5) (4) (0) (-3)
   where len = backgroundSize b
 
 hintsExtent :: Board -> Extent
