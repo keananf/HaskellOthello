@@ -2,9 +2,7 @@ module ClientMain where
 
 import Network.Socket
 import System.IO
-import Control.Monad
 import Control.Concurrent
-import Control.Concurrent.Chan
 import Data.List.Split
 
 data Msg = String

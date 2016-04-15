@@ -81,11 +81,12 @@ updateWorld t w | gameOver board = return w {gameState=GameOver}
                 | state==Playing && hasAI && aiColour == col && length (nextMoves tree) > 0 =
                     return w {gameboard = newBoard, turn = other col, oldworld = w, time=10.0}
 
-                | state==Playing && hasAI && aiColour == col = --ai has to pass
+                | state == Playing && hasAI && aiColour == col = --ai has to pass
                     return w {turn = other col, oldworld = w, time=10.0}
                 | state == Menu || state == Paused = return w --game not started yet or paused
 
-                | otherwise = return w {time = (time w) - 0.1} --player v player
+                | not (network w) = return w {time = (time w) - 0.1}
+                | otherwise = return w--player v player
                 where aiColour = aiCol w
                       col = turn w
                       hasAI = ai w

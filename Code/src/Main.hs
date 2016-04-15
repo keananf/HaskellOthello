@@ -21,7 +21,7 @@ import Game
 -- move
 
 main :: IO ()
-main = do background <- loadJuicyPNG "../textures/background-red.png"
+main = do background <- loadJuicyPNG "../textures/background-wood.png"
           sidePanel  <- loadJuicyPNG "../textures/side-panel.png"
           tile       <- loadJuicyPNG "../textures/tile-white.png"
           blackPiece <- loadJuicyPNG "../textures/piece-black.png"

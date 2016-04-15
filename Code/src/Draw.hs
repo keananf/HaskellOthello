@@ -16,6 +16,7 @@ import Graphics.Gloss
 import Graphics.Gloss.Data.Extent
 import Board
 import Game
+import Data.List
 
 data Atlas = Atlas { background :: Picture
                    , sidePanel :: Picture
@@ -29,7 +30,7 @@ data Atlas = Atlas { background :: Picture
 drawWorld :: Atlas -> World -> IO Picture
 drawWorld atlas world | (gameState world) == Playing =
                           return (scale sf sf picture) --draw board if not game over
-                      | (gameState world) == Menu = return (scale sf sf (drawMenu b))
+                      | (gameState world) == Menu = return (scale sf sf (drawMenu world))
                       | (gameState world) == Paused =
                           return (scale sf sf (pictures ((drawPause b) ++ (map (centreImg) score))))
 
@@ -95,16 +96,21 @@ drawPause b = pics
 
 
 -- | draws the menu screen
-drawMenu :: Board -> Picture
-drawMenu b = pictures (pics)
-  where background = (rectangleSolid (backgroundSize b) (backgroundSize b))
+drawMenu :: World -> Picture
+drawMenu w | (ai w) && (difficulty w) == 1 = pictures (pics ++ [(scale sf sf (color white aiMediumMsg)),
+             (color green (scale sf sf aiEasyMsg)), (color green (scale sf sf aiMsg))])
+           | (ai w) && (difficulty w) == 2 = pictures (pics ++ [(scale sf sf (color white aiEasyMsg)),
+             (color green (scale sf sf aiMediumMsg)), (color green (scale sf sf aiMsg))])
+           | otherwise = pictures (pics ++ map (\pic -> color white (scale sf sf pic))
+                                   [aiEasyMsg,aiMsg,aiMediumMsg])
+  where b = gameboard w
+        background = (rectangleSolid (backgroundSize b) (backgroundSize b))
         playMsg = color white (translate (250) (-200) (centreImg(text ("Play"))))
-        aiMsg = color white (translate (1300) (375) (centreImg(text ("AI"))))
-        aiEasyMsg = color white (translate (1300) (75) (centreImg(text ("Easy"))))
-        aiMediumMsg = color white (translate (1300) (-175) (centreImg(text ("Medium"))))
-        options = map (\pic -> scale sf sf pic) (aiMsg:[aiEasyMsg, aiMediumMsg])
+        aiMsg = (translate (1300) (375) (centreImg(text ("AI"))))
+        aiEasyMsg = (translate (1300) (75) (centreImg(text ("Easy"))))
+        aiMediumMsg = (translate (1300) (-175) (centreImg(text ("Medium"))))
         titleMsg = color white (translate (200) (550) (centreImg(text ("Othello"))))
-        pics = (background:[playMsg, (scale 1.5 1.5 titleMsg)]) ++ options
+        pics = (background:[playMsg, (scale 1.5 1.5 titleMsg)])
 
 
 -- | Display whose turn it is at the bottom of the board
@@ -116,7 +122,8 @@ drawTurn world = (color white pic)
 
 -- | Prints the Score of each colour to the right of the board
 drawScore :: World -> [Picture]
-drawScore w = map (\pic -> (color white pic)) pics
+drawScore w | not (network w) = map (\pic -> (color white pic)) pics
+            | otherwise = map (\pic -> (color white pic)) [score1,score2]
   where scores = checkScore (gameboard w)
         len = backgroundSize (gameboard w)
         score1 = translate (len) (len-(0.25 *len)) (scale sf sf(text ("Black: " ++ show(fst scores))))

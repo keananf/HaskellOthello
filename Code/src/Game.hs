@@ -39,6 +39,7 @@ data World = World { gameboard :: Board,
                      difficulty :: Int, --difficulty of ai
                      network :: Bool, --if network is on
                      handle :: IO Handle, --handle representing network connection
+                     file :: FilePath,
                      aiCol :: Col, --ai colour
                      userCol :: Col, --user colour
                      args :: [String], --all args passed in
@@ -51,17 +52,21 @@ initBoard reversi | reversi== False = Board 8 0 reversi [((3,4), Black), ((4,4),
                   | otherwise = Board 8 0 reversi []
 
 initWorld :: [String] -> World
-initWorld args = do let handle = client "localhost" 4024
-                    (World board Menu oldWorld hints ai difficulty network
-                     handle aiCol userCol args 10.0 Black)
+initWorld args = (World board Menu oldWorld hints ai difficulty network
+                  getHandle filePath aiCol userCol args 10.0 Black)
   where board = initBoard (isReversi args network)
         oldWorld = initWorld args
         hints = hasHints args
         ai = hasAI args
         network = hasNetwork args
+        filePath = "/saveFile.txt"
         difficulty = aiDifficulty args
         userCol = userColour args
         aiCol = opp userCol
+
+getHandle :: IO Handle
+getHandle = do handle <- client "localhost" 4024
+               return handle
 
 userColour :: [String] -> Col
 userColour arguments | length arguments >= 1 && any (=="user=white") arguments = White
@@ -119,15 +124,11 @@ gameOver board | (passes board) == 2 = True
 
 -- | Attempts to undo a move given the particular type of game
 undoMove :: World -> IO World
-undoMove world -- | network world && userColour == col= do let newWorld = oldworld (oldworld world)
-               --                                         sendAcrossNetwork networkHandle (-2) (-2)
-                --                                        return newWorld
-               | not (ai world) = do let newWorld = oldworld world --undoes move for player v player
-                                     print "Undoing"
-                                     return newWorld{time=10.0}
-               | otherwise = do let oldWorld = (oldworld (oldworld world)) --undoes for ai v player
-                                print "Undoing"
-                                return oldWorld{time=10.0}
+undoMove world | ((gameState (oldworld world)) == Menu && not (ai world)) ||
+                 ((gameState (oldworld (oldworld world)) == Menu) && (ai world)) = return world
+
+               | not (ai world) = (return (oldworld world){time=10.0}) --undoes move for player v player
+               | otherwise = return ((oldworld (oldworld world)){time=10.0}) --undoes for ai v player
                where networkHandle = handle world
                      userColour = userCol world
                      col = turn world
