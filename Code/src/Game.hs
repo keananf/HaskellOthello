@@ -3,6 +3,7 @@ module Game where
 import Data.Char
 import System.IO
 import ClientMain
+import System.IO.Unsafe
 
 data Col = Black | White
   deriving (Show, Eq)
@@ -38,7 +39,7 @@ data World = World { gameboard :: Board,
                      ai :: Bool, --if ai is on
                      difficulty :: Int, --difficulty of ai
                      network :: Bool, --if network is on
-                     handle :: IO Handle, --handle representing network connection
+                     handle :: Handle, --handle representing network connection
                      file :: FilePath,
                      aiCol :: Col, --ai colour
                      userCol :: Col, --user colour
@@ -53,7 +54,7 @@ initBoard reversi | reversi== False = Board 8 0 reversi [((3,4), Black), ((4,4),
 
 initWorld :: [String] -> World
 initWorld args = (World board Menu oldWorld hints ai difficulty network
-                  getHandle filePath aiCol userCol args 10.0 Black)
+                  (unsafePerformIO getHandle) filePath aiCol userCol args 10.0 Black)
   where board = initBoard (isReversi args network)
         oldWorld = initWorld args
         hints = hasHints args

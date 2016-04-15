@@ -100,23 +100,26 @@ chooseAI :: World -> GameTree-> (Position, GameTree)
 chooseAI world tree | (difficulty world) == 1 = getBestMoveBadAI tree world --easy
                     | otherwise = getBestMoveGoodAI 3 tree world --medium
 
+readNetwork :: World -> IO (Int, Int)
+readNetwork world = do
+  (x,y) <- readAcrossNetwork (handle world)
+  return (x,y)
+
 -- |Processes move received from network
 moveFromNetwork :: World -> IO World
-moveFromNetwork w = do hand <- (handle w)
-                       (x,y) <- readAcrossNetwork hand
-                       case (x,y) of
-                         (-3, -3) -> return w {turn = col, oldworld = oldWorld,
+moveFromNetwork w = do case (x,y) of
+                         (-3, -3) -> return w {turn = col,
                                                ai = True, aiCol = col, network = False}
                            --not a pass
-                         (-1, -1) -> case makeMove board col (x,y) of
+                         (-1, -1) -> return w {turn = other col, oldworld = w}
+                         --pass
+                         (_,_) -> case makeMove board col (x,y) of
                            (Just newBoard') ->
                              return w {gameboard =  newBoard', turn = other col, oldworld = w}
                            (Nothing) -> return w {turn = other col, oldworld = w}
-                         --pass
-                         (_,_) -> return w {turn = other col, oldworld = w}
-  where board = gameboard w
+  where (x,y) = (unsafePerformIO (readNetwork w))
+        board = gameboard w
         col = turn w
-        oldWorld = initWorld (args w)
 
 -- | Evaluates a board for a given gametree
 eval :: GameTree -> World -> Int
