@@ -21,13 +21,15 @@ import Game
 -- move
 
 main :: IO ()
-main = do tile <- loadBMP "../tile.bmp"
-          blackPiece <- loadBMP "../black-piece.bmp"
-          whitePiece <- loadBMP "../white-piece.bmp"
-          movePiece <- loadBMP "../move.bmp"
-          args <- getArgs
+main = do background <- loadJuicyPNG "../textures/background-red.png"
+          sidePanel  <- loadJuicyPNG "../textures/side-panel.png"
+          tile       <- loadJuicyPNG "../textures/tile-white.png"
+          blackPiece <- loadJuicyPNG "../textures/piece-black.png"
+          whitePiece <- loadJuicyPNG "../textures/piece-white.png"
+          movePiece  <- loadJuicyPNG "../textures/piece-hint.png"
+          args       <- getArgs
           play (InWindow "Othello" (1200, 600) (10, 10)) black 10
             (initWorld args)
-            (drawWorld (tile, blackPiece, whitePiece, movePiece)) -- in Draw.hs
+            (drawWorld (Atlas (pictureOrBlank background) (pictureOrBlank sidePanel) (pictureOrBlank tile) (pictureOrBlank blackPiece) (pictureOrBlank whitePiece) (pictureOrBlank movePiece)) ) -- in Draw.hs
             handleInput -- in Input.hs
             updateWorld -- in AI.hs
