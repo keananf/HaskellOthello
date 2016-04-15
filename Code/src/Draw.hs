@@ -14,7 +14,6 @@ module Draw
 
 import Graphics.Gloss
 import Graphics.Gloss.Data.Extent
-import Data.Maybe
 import Board
 import Game
 
@@ -27,9 +26,8 @@ data Atlas = Atlas { background :: Picture
 
 -- This extracts the Board from the world state and draws it
 -- as a grid plus pieces.
-<<<<<<< HEAD
-drawWorld :: Types -> World -> IO Picture
-drawWorld tiles world | (gameState world) == Playing =
+drawWorld :: Atlas -> World -> IO Picture
+drawWorld atlas world | (gameState world) == Playing =
                           return (scale sf sf picture) --draw board if not game over
                       | (gameState world) == Menu = return (scale sf sf (drawMenu b))
                       | (gameState world) == Paused =
@@ -37,13 +35,6 @@ drawWorld tiles world | (gameState world) == Playing =
 
                       | otherwise =
                           return (scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score))))
-=======
-drawWorld :: Atlas -> World -> Picture
-drawWorld atlas world | (gameState world) == Playing = scale sf sf picture --draw board if not game over
-                      | (gameState world) == Menu = scale sf sf (drawMenu b)
-                      | (gameState world) == Paused = scale sf sf (pictures ((drawPause b) ++ (map (centreImg) score)))
-                      | otherwise = scale sf sf (pictures ((drawGameOver b) ++ (map (centreImg) score)))
->>>>>>> 96165491840f5d24f0de00ac30ba2721ccf9347f
   where b = gameboard world
         boardTiles = (getTiles b world atlas) --list of pictures representing the tiles
         score = drawScore world
