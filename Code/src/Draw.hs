@@ -42,7 +42,7 @@ drawWorld atlas world | (gameState world) == Playing =
         bg = translate (350) (350) (background atlas)
         sp = translate (350) (350) (sidePanel atlas)
         turnImg = drawTurn world
-        picture = centreImg ( pictures ([bg, sp, turnImg] ++ score ++ boardTiles ++ (drawButtons b)) )
+        picture = centreImg ( pictures ([bg, sp, turnImg] ++ score ++ boardTiles ++ (drawButtons world)) )
 
 -- | Retrieves a list of each individual picture representing
 -- | each tile
@@ -95,9 +95,12 @@ drawPause b = pics
         pics = (background:[(scale sf sf gameOverMsg), (scale sf sf continueMsg)])
 
 
--- | draws the menu screen
+-- | Draws the menu screen. Active options are highlighted,
+-- | and if the network is on, options that cannot be set are turned red.
 drawMenu :: World -> Picture
-drawMenu w | (ai w) && (difficulty w) == 1 = pictures (pics ++ [(scale sf sf (color white aiMediumMsg)),
+drawMenu w | (network w) = pictures (pics ++ [(scale sf sf (color red aiMediumMsg)),
+             (color red (scale sf sf aiEasyMsg)), (color red (scale sf sf aiMsg))])
+           | (ai w) && (difficulty w) == 1 = pictures (pics ++ [(scale sf sf (color white aiMediumMsg)),
              (color green (scale sf sf aiEasyMsg)), (color green (scale sf sf aiMsg))])
            | (ai w) && (difficulty w) == 2 = pictures (pics ++ [(scale sf sf (color white aiEasyMsg)),
              (color green (scale sf sf aiMediumMsg)), (color green (scale sf sf aiMsg))])
@@ -120,21 +123,31 @@ drawTurn world = (color white pic)
         col = turn world
         centre = (backgroundSize (gameboard world)) / 2 - fromIntegral(sizeOfTile) --x y from right
 
--- | Prints the Score of each colour to the right of the board
+-- | Prints the Score of each colour to the right of the board,
+-- | as well as the time remaining for the turn
 drawScore :: World -> [Picture]
-drawScore w | not (network w) = map (\pic -> (color white pic)) pics
+drawScore w | (network w) = (getScores w)
+            | otherwise = (color white timeLeft):(getScores w)
+  where len = backgroundSize (gameboard w)
+        timeLeft = translate (len) (len-(0.75*len)) (scale sf sf(text ("Time: " ++ show(truncate(time w)))))
+
+-- | Retrieves each score, and colours the winning one green
+getScores :: World -> [Picture]
+getScores w | fst scores > snd scores = [color green score1, color white score2]
+            | fst scores < snd scores = [color white score1, color green score2]
             | otherwise = map (\pic -> (color white pic)) [score1,score2]
   where scores = checkScore (gameboard w)
         len = backgroundSize (gameboard w)
         score1 = translate (len) (len-(0.25 *len)) (scale sf sf(text ("Black: " ++ show(fst scores))))
         score2 = translate (len) (len-(0.5*len)) (scale sf sf(text ("White: " ++ show(snd scores))))
-        timeLeft = translate (len) (len-(0.75*len)) (scale sf sf(text ("Time: " ++ show(truncate(time w)))))
-        pics = [score1,score2, timeLeft]
 
 ---------------------------------------------------------------
 --Buttons
-drawButtons :: Board -> [Picture]
-drawButtons board = [(undoButton board), (menuButton board), (hintsButton board)]
+drawButtons :: World -> [Picture]
+drawButtons w | network w = (hintsButton board):(map (\pic -> color red pic) buttons)
+              | otherwise = (hintsButton board):buttons
+  where buttons = [(undoButton board), (menuButton board)]
+        board = gameboard w
 
 undoButton :: Board -> Picture
 undoButton board = translate  (len-1.35*len) (len-(0.25 *len)) (scale sf sf (text ("UNDO")))
