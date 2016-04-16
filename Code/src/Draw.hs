@@ -153,45 +153,26 @@ hintsButton board = translate  (len-1.35*len)  (len-(0.75 *len))(scale sf sf (te
 -------------------------------------------------------------
 --Extents
 
-undoExtent :: Board -> Extent
-undoExtent b = makeExtent 7 6 0 (-3)
-  where len = backgroundSize b
-        ymin = truncate(len-(0.25*len))
-        ymax = ymin + sizeOfTile `div` 2
-        xmin = truncate(len-1.35*len)
-        xmax = 0
+undoExtent ::Extent
+undoExtent = makeExtent 7 6 0 (-3)
 
-menuExtent :: Board -> Extent
-menuExtent b = makeExtent 5 4 0 (-3)
-  where len = backgroundSize b
-        ymin = truncate(len-(0.5*len))
-        ymax = ymin + sizeOfTile `div` 2
-        xmin = truncate(len-1.35*len)
-        xmax = 0
+menuExtent :: Extent
+menuExtent = makeExtent 5 4 0 (-3)
 
-hintsExtent :: Board -> Extent
-hintsExtent b = makeExtent 3 2 0 (-3)
-  where len = backgroundSize b
-        ymin = truncate (((0.75*len)-len))
-        ymax = ymin + sizeOfTile `div` 2
-        xmin = truncate ((len-1.35*len))
-        xmax = 0
+hintsExtent :: Extent
+hintsExtent = makeExtent 3 2 0 (-3)
 
-playExtent :: Board -> Extent
-playExtent b = makeExtent (0) (-2) (5) (3)
-  where len = backgroundSize b
+playExtent :: Extent
+playExtent = makeExtent (0) (-2) (5) (3)
 
-aiExtent :: Board -> Extent
-aiExtent b = makeExtent (5) (4) (10) (8)
-  where len = backgroundSize b
+aiExtent :: Extent
+aiExtent  = makeExtent (5) (4) (10) (8)
 
-aiEasyExtent :: Board -> Extent
-aiEasyExtent b = makeExtent (3) (2) (10) (7)
-  where len = backgroundSize b
+aiEasyExtent :: Extent
+aiEasyExtent = makeExtent (3) (2) (10) (7)
 
-aiMedExtent :: Board -> Extent
-aiMedExtent b = makeExtent (2) (1) (11) (7)
-  where len = backgroundSize b
+aiMedExtent ::  Extent
+aiMedExtent = makeExtent (2) (1) (11) (7)
 
 -------------------------------------------------------------
 
