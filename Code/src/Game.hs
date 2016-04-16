@@ -3,6 +3,9 @@ module Game where
 import Data.Char
 import System.IO
 import ClientMain
+import System.IO.Unsafe
+import Text.Regex.Posix
+import Text.Regex.Base
 
 data Col = Black | White
   deriving (Show, Eq)
@@ -38,7 +41,8 @@ data World = World { gameboard :: Board,
                      ai :: Bool, --if ai is on
                      difficulty :: Int, --difficulty of ai
                      network :: Bool, --if network is on
-                     handle :: IO Handle, --handle representing network connection
+                     host :: String,
+                     handle :: Handle, --handle representing network connection
                      file :: FilePath,
                      aiCol :: Col, --ai colour
                      userCol :: Col, --user colour
@@ -52,8 +56,8 @@ initBoard reversi | reversi== False = Board 8 0 reversi [((3,4), Black), ((4,4),
                   | otherwise = Board 8 0 reversi []
 
 initWorld :: [String] -> World
-initWorld args = (World board Menu oldWorld hints ai difficulty network
-                  getHandle filePath aiCol userCol args 10.0 Black)
+initWorld args = (World board Menu oldWorld hints ai difficulty network host
+                  (unsafePerformIO $ getHandle host) filePath aiCol userCol args 10.0 Black)
   where board = initBoard (isReversi args network)
         oldWorld = initWorld args
         hints = hasHints args
@@ -63,10 +67,12 @@ initWorld args = (World board Menu oldWorld hints ai difficulty network
         difficulty = aiDifficulty args
         userCol = userColour args
         aiCol = opp userCol
+        host = hostName args
 
-getHandle :: IO Handle
-getHandle = do handle <- client "localhost" 4024
-               return handle
+getHandle :: String -> IO Handle
+getHandle host = do
+          handle <- client host 4024
+          return handle
 
 userColour :: [String] -> Col
 userColour arguments | length arguments >= 1 && any (=="user=white") arguments = White
@@ -83,6 +89,13 @@ hasAI arguments | length arguments >= 1 && any (=="ai") arguments = True
 hasNetwork :: [String] -> Bool
 hasNetwork arguments | length arguments >= 1 && any (=="network") arguments = True
                 | otherwise = False
+
+hostName :: [String] -> String
+hostName arguments | length arguments >= 1 && length (findIPs arguments) > 0 = (findIPs arguments) !! 0
+                   | otherwise = "localhost"
+
+findIPs :: [String] -> [String]
+findIPs arguments = filter (=~ "(([0-9]{1,3}.){3}[0-9]{1,3})") arguments
 
 -- | Check to see if the user wishes to play the game with the
 -- | reversi rule set, that is, that the first two moves by each colour
