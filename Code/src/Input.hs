@@ -2,32 +2,23 @@ module Input(handleInput) where
 
 import Graphics.Gloss.Interface.Pure.Game
 import Graphics.Gloss.Data.Extent
-import Graphics.Gloss
 import Draw
 import Board
-import AI
 import Game
 import ClientMain
-import System.IO.Unsafe
-
-
-import Debug.Trace
 
 -- Update the world state given an input event. Some sample input events
 -- are given; when they happen, there is a trace printed on the console
 --
--- trace :: String -> a -> a
--- 'trace' returns its second argument while printing its first argument
--- to stderr, which can worlde a very useful way of debugging!
 handleInput :: Event -> World -> IO World
 handleInput (EventKey (MouseButton LeftButton) Up m (x, y)) world
   | (gameState world) == Paused = return world --ignore input until it is not paused
   | (gameState world) == Menu = return (handleMenuInput x' y' world)
 
     --Functionality for buttons
-  | coordInExtent (menuExtent board) (x',y') && not (network world)= return (initWorld (args world))
-  | coordInExtent (undoExtent board) (x',y') && validUndo world x' y' = undoMove world
-  | coordInExtent (hintsExtent board) (x',y') = return world {hints = (not (hints world))}
+  | coordInExtent (menuExtent) (x',y') && not (network world)= return (initWorld (args world))
+  | coordInExtent (undoExtent) (x',y') && validUndo world x' y' = undoMove world
+  | coordInExtent (hintsExtent) (x',y') = return world {hints = (not (hints world))}
 
   | validNetworkMove world x' y' = (moveOverNetwork world x' y')
 
@@ -67,10 +58,10 @@ handleInput e world = return world
 
 ------------------------------------------------------------------------
 handleMenuInput :: Int -> Int -> World -> World
-handleMenuInput x y world| coordInExtent (playExtent board) (x, y) = world {gameState=Playing}
-                         | coordInExtent (aiExtent board) (x, y) = world {ai= not(ai world)}
-                         | coordInExtent (aiEasyExtent board) (x, y) = world {difficulty=1, ai=True}
-                         | coordInExtent (aiMedExtent board) (x, y) = world {difficulty=2, ai=True}
+handleMenuInput x y world| coordInExtent (playExtent) (x, y) = world {gameState=Playing}
+                         | coordInExtent (aiExtent) (x, y) = world {ai= not(ai world)}
+                         | coordInExtent (aiEasyExtent) (x, y) = world {difficulty=1, ai=True}
+                         | coordInExtent (aiMedExtent) (x, y) = world {difficulty=2, ai=True}
                          | otherwise = world
   where board = gameboard world
 

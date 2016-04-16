@@ -132,3 +132,21 @@ undoMove world | ((gameState (oldworld world)) == Menu && not (ai world)) ||
                where networkHandle = handle world
                      userColour = userCol world
                      col = turn world
+
+-- | Saves the list of pieces into the file stored in the world.
+saveGame :: World -> IO()
+saveGame world = do let game = (pieces (gameboard world))
+                    handle <- openFile (file world) WriteMode
+                    hPrint handle (args world)
+                    hPrint handle game
+
+loadGame :: World -> IO World
+loadGame world = do handle <- readFile (file world)
+                    args <- readLines 1 handle
+                    pieces <- rList handle
+                    let world = initWorld args
+                    return world{gameboard = (loadPiecesToBoard pieces)}
+
+
+loadPiecesToBoard :: [Piece] -> Board
+loadPiecesToBoard gamePieces = (initBoard False){pieces=gamePieces}
