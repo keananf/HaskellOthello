@@ -42,7 +42,7 @@ data World = World { gameboard :: Board,
                      difficulty :: Int, --difficulty of ai
                      network :: Bool, --if network is on
                      host :: String,
-                     handle :: Handle, --handle representing network connection
+                     handle :: IO Handle, --handle representing network connection
                      file :: FilePath,
                      aiCol :: Col, --ai colour
                      userCol :: Col, --user colour
@@ -57,7 +57,7 @@ initBoard reversi | reversi== False = Board 8 0 reversi [((3,4), Black), ((4,4),
 
 initWorld :: [String] -> World
 initWorld args = (World board Menu oldWorld hints ai difficulty network host
-                  (unsafePerformIO $ getHandle host) filePath aiCol userCol args 10.0 Black)
+                  (getHandle host) filePath aiCol userCol args 10.0 Black)
   where board = initBoard (isReversi args network)
         oldWorld = initWorld args
         hints = hasHints args
@@ -147,19 +147,19 @@ undoMove world | ((gameState (oldworld world)) == Menu && not (ai world)) ||
                      col = turn world
 
 -- | Saves the list of pieces into the file stored in the world.
-saveGame :: World -> IO()
-saveGame world = do let game = (pieces (gameboard world))
-                    handle <- openFile (file world) WriteMode
-                    hPrint handle (args world)
-                    hPrint handle game
+--saveGame :: World -> IO()
+--saveGame world = do let game = (pieces (gameboard world))
+--                    handle <- openFile (file world) WriteMode
+--                    hPrint handle (args world)
+ --                   hPrint handle game
 
-loadGame :: World -> IO World
-loadGame world = do handle <- readFile (file world)
-                    args <- readLines 1 handle
-                    pieces <- rList handle
-                    let world = initWorld args
-                    return world{gameboard = (loadPiecesToBoard pieces)}
+--loadGame :: World -> IO World
+--loadGame world = do handle <- readFile (file world)
+--                    args <- readLines 1 handle
+--                    pieces <- rList handle
+--                    let world = initWorld args
+ --                   return world{gameboard = (loadPiecesToBoard pieces)}
 
 
-loadPiecesToBoard :: [Piece] -> Board
-loadPiecesToBoard gamePieces = (initBoard False){pieces=gamePieces}
+--loadPiecesToBoard :: [Piece] -> Board
+--loadPiecesToBoard gamePieces = (initBoard False){pieces=gamePieces}

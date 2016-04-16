@@ -97,15 +97,16 @@ validUndo world x y = not (inRange board (x, y)) && not (gameOver board) && not 
 
 --sends a pass over the network
 passOverNetwork :: World -> IO World
-passOverNetwork world = do sendAcrossNetwork (handle world) (-1) (-1)
+passOverNetwork world = do hand <- handle world
+                           sendAcrossNetwork hand (-1) (-1)
                            return world {oldworld = world, turn = other (turn world)}
 
 -- | Makes a move and attempts to send it across the network
 moveOverNetwork :: World -> Int -> Int -> IO World
 moveOverNetwork world x y = case makeMove board col (x,y) of --make move and send across network
-    (Just newBoard') -> do let newWorld = world {gameboard = newBoard', turn = newCol, oldworld = world}
-                           sendAcrossNetwork (handle world) x y
-                           return newWorld
+    (Just newBoard') -> do hand <- (handle world)
+                           sendAcrossNetwork hand x y
+                           return world {gameboard = newBoard', turn = newCol, oldworld = world}
     (Nothing) -> return world --bad move, dont update world
     where board = gameboard world
           col = turn world

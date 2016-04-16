@@ -3,7 +3,7 @@ module AI where
 import Board
 import Game
 import ClientMain
-import System.IO.Unsafe
+import System.IO
 
 
 data GameTree = GameTree { game_board :: Board,
@@ -100,25 +100,26 @@ chooseAI :: World -> GameTree-> (Position, GameTree)
 chooseAI world tree | (difficulty world) == 1 = getBestMoveBadAI tree world --easy
                     | otherwise = getBestMoveGoodAI 3 tree world --medium
 
-readNetwork :: World -> IO (Int, Int)
-readNetwork world = do
-  (x,y) <- readAcrossNetwork (handle world)
+readNetwork :: Handle -> IO (Int, Int)
+readNetwork hand = do
+  (x,y) <- readAcrossNetwork hand
   return (x,y)
 
 -- |Processes move received from network
 moveFromNetwork :: World -> IO World
-moveFromNetwork w = do case (x,y) of
+moveFromNetwork w = do hand <- (handle w)
+                       (x,y) <- readNetwork hand
+                       case (x,y) of
                          (-3, -3) -> return w {turn = col,
                                                ai = True, aiCol = col, network = False}
-                           --not a pass
-                         (-1, -1) -> return w {turn = other col, oldworld = w}
                          --pass
+                         (-1, -1) -> return w {turn = other col, oldworld = w}
+                         --not a pass
                          (_,_) -> case makeMove board col (x,y) of
                            (Just newBoard') ->
                              return w {gameboard =  newBoard', turn = other col, oldworld = w}
                            (Nothing) -> return w {turn = other col, oldworld = w}
-  where (x,y) = (unsafePerformIO (readNetwork w))
-        board = gameboard w
+  where board = gameboard w
         col = turn w
 
 -- | Evaluates a board for a given gametree
