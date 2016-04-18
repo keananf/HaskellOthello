@@ -1,10 +1,8 @@
 module Game where
 
-import Data.Char
 import System.IO
 import ClientMain
 import Text.Regex.Posix
-import Text.Regex.Base
 
 data Col = Black | White
   deriving (Show, Eq, Read)

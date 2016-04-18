@@ -16,7 +16,6 @@ import Graphics.Gloss
 import Graphics.Gloss.Data.Extent
 import Board
 import Game
-import Data.List
 
 data Atlas = Atlas { background :: Picture
                    , sidePanel :: Picture
