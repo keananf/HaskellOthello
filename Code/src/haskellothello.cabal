@@ -17,4 +17,4 @@ cabal-version:       >=1.8
 executable haskellothello
   main-is:             Main.hs
   -- other-modules:
-  build-depends:       base ==4.6.*, regex-posix ==0.95.*, regex-base ==0.93.*, gloss ==1.8.*, network ==2.4.*, split ==0.2.*, gloss-juicy ==0.1.*
+  build-depends:       base ==4.*, regex-posix ==0.95.*, regex-base ==0.93.*, gloss ==1.8.*, network ==2.4.*, split ==0.2.*, gloss-juicy ==0.1.*
