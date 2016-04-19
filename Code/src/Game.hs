@@ -1,8 +1,14 @@
 module Game where
 
+import Graphics.Gloss
+import Graphics.Gloss.Juicy
+import Data.Maybe
+import Data.List
 import System.IO
+import System.IO.Unsafe
 import ClientMain
 import Text.Regex.Posix
+import Debug.Trace
 
 data Col = Black | White
   deriving (Show, Eq, Read)
@@ -43,7 +49,8 @@ data World = World { gameboard :: Board,
                      userCol :: Col, --user colour
                      args :: [String], --all args passed in
                      time :: Float, --time remaining for this turn
-                     turn :: Col }
+                     turn :: Col,
+                     background :: Picture}
 
 -- | Creates a new board of size 8. If reversi mode is active, then
 -- | the board starts with no pieces
@@ -59,7 +66,7 @@ initBoard reversi | reversi== False = Board 8 0 reversi [((3,4), Black), ((4,4),
 -- | to play another game, they don't have to quit out and restart with the same options.
 initWorld :: [String] -> World
 initWorld args = (World board Menu oldWorld hints ai difficulty network host
-                  (getHandle host) aiCol userCol args 10.0 Black)
+                  (getHandle host) aiCol userCol args 10.0 Black background)
   where board = initBoard (isReversi args network)
         oldWorld = initWorld args
         hints = hasHints args
@@ -70,6 +77,23 @@ initWorld args = (World board Menu oldWorld hints ai difficulty network host
         userCol = userColour args
         aiCol = opp userCol
         host = hostName args
+        background = getBackground args
+
+getBackground :: [String] -> Picture
+getBackground args | length args >= 1 && any (isInfixOf "background=") args
+                     = loadBackground name
+                   | otherwise = loadBackground "wood"
+                   where validargs = filter (isInfixOf "background=") args
+                         names = (validargs !! 0 =~ "background=([A-Za-z]*)")
+                         name = names !! 0 !! 1
+
+loadBackground :: String -> Picture
+loadBackground bgname = unsafePerformIO $ do
+                                             img <- loadJuicyPNG ("../textures/background-" ++ bgname ++ ".png")
+                                             return (
+                                                    case img of
+                                                        Just pic -> pic
+                                                        Nothing  -> Blank)
 
 -- | Attempts to connect to the remote server to play a game over the network.
 getHandle :: String -> IO Handle
@@ -120,7 +144,7 @@ isReversi arguments net| length arguments >= 1 && net == False && any (== "rever
                        | otherwise = False
 
 -- | Checks to see if the user requested to display hints. Defaults to
--- | False, and can also be set from in-game. 
+-- | False, and can also be set from in-game.
 hasHints :: [String] -> Bool
 hasHints arguments | length arguments >= 1 && any (=="hints") arguments = True
                    | otherwise = False
@@ -167,4 +191,3 @@ undoMove world | ((gameState (oldworld world)) == Menu && not (ai world)) ||
                where networkHandle = handle world
                      userColour = userCol world
                      col = turn world
-

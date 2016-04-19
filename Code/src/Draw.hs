@@ -17,8 +17,7 @@ import Graphics.Gloss.Data.Extent
 import Board
 import Game
 
-data Atlas = Atlas { background :: Picture
-                   , sidePanel :: Picture
+data Atlas = Atlas { sidePanel :: Picture
                    , tile :: Picture
                    , blackPiece :: Picture
                    , whitePiece :: Picture
@@ -38,7 +37,7 @@ drawWorld atlas world | (gameState world) == Playing =
   where b = gameboard world
         boardTiles = (getTiles b world atlas) --list of pictures representing the tiles
         score = drawScore world
-        bg = translate (350) (350) (background atlas)
+        bg = translate (350) (350) (background world)
         sp = translate (350) (350) (sidePanel atlas)
         turnImg = drawTurn world
         picture = centreImg ( pictures ([bg, sp, turnImg] ++ score ++ boardTiles ++ (drawButtons world)) )
