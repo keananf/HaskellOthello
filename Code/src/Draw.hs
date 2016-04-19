@@ -39,7 +39,7 @@ drawWorld atlas world | (gameState world) == Playing =
         bg = translate (350) (350) (background world)
         sp = translate (350) (350) (sidePanel atlas)
         turnImg = drawTurn world
-        picture = centreImg ( pictures ([bg, turnImg] ++ boardTiles ++ [sp] ++ score ++ (drawButtons world)) )
+        picture = centreImg ( pictures ([bg] ++ boardTiles ++ [sp] ++ (turnImg:score) ++ (drawButtons world)) )
 
 -- | Retrieves a list of each individual picture representing
 -- | each tile
