@@ -81,6 +81,7 @@ initWorld args = (World board Menu oldWorld hints ai difficulty network host
         background = loadBackground args
         tile = loadTile args
 
+-- | load the correct background (wood default) given command line arguments if any
 loadBackground :: [String] -> Picture
 loadBackground args | length args >= 1 && any (isInfixOf "background=") args
                       = loadImage ("../textures/background-" ++ name ++ ".png")
@@ -89,11 +90,13 @@ loadBackground args | length args >= 1 && any (isInfixOf "background=") args
                           names = (validargs !! 0 =~ "background=([A-Za-z]*)")
                           name = names !! 0 !! 1
 
+-- | load the correct tile image (white default) given command line arguments if any
 loadTile :: [String] -> Picture
 loadTile args | length args >= 1 && any (== "tile=black") args
                = loadImage ("../textures/tile-black.png")
              | otherwise = loadImage "../textures/tile-white.png"
 
+-- | load an image from loadJuicyPNG, return a Blank if the Maybe picture is Nothing
 loadImage :: String -> Picture
 loadImage bgname = unsafePerformIO $ do
                                          img <- loadJuicyPNG bgname
