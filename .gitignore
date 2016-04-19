@@ -1,3 +1,4 @@
 *.o
 *.hi
 haskellothello
+haskellothello-server
