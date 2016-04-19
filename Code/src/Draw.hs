@@ -18,7 +18,6 @@ import Board
 import Game
 
 data Atlas = Atlas { sidePanel :: Picture
-                   , tile :: Picture
                    , blackPiece :: Picture
                    , whitePiece :: Picture
                    , hintPiece :: Picture }
@@ -56,7 +55,7 @@ getTile world board (x,y) atlas = pictures [
            ( case (findPiece board (x,y)) of
                Just piece -> translate x' y' (getColour (blackPiece atlas, whitePiece atlas) piece)
                Nothing    -> Blank ),
-           translate x' y' (tile atlas)]
+           translate x' y' (tile world)]
   where pos' = getOffset (x,y)
         x' = fromIntegral (fst pos') --convert to float
         y' = fromIntegral (snd pos')

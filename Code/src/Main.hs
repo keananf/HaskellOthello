@@ -22,7 +22,6 @@ import Game
 
 main :: IO ()
 main = do sidePanel  <- loadJuicyPNG "../textures/side-panel.png"
-          tile       <- loadJuicyPNG "../textures/tile-white.png"
           blackPiece <- loadJuicyPNG "../textures/piece-black.png"
           whitePiece <- loadJuicyPNG "../textures/piece-white.png"
           movePiece  <- loadJuicyPNG "../textures/piece-hint.png"
@@ -30,7 +29,6 @@ main = do sidePanel  <- loadJuicyPNG "../textures/side-panel.png"
           playIO (InWindow "Othello" (750, 750) (10, 10)) black 10
             (initWorld args)
             (drawWorld (Atlas (pictureOrBlank sidePanel)
-                              (pictureOrBlank tile)
                               (pictureOrBlank blackPiece)
                               (pictureOrBlank whitePiece)
                               (pictureOrBlank movePiece)) ) -- in Draw.hs

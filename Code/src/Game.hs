@@ -50,7 +50,8 @@ data World = World { gameboard :: Board,
                      args :: [String], --all args passed in
                      time :: Float, --time remaining for this turn
                      turn :: Col,
-                     background :: Picture}
+                     background :: Picture,
+                     tile :: Picture}
 
 -- | Creates a new board of size 8. If reversi mode is active, then
 -- | the board starts with no pieces
@@ -66,7 +67,7 @@ initBoard reversi | reversi== False = Board 8 0 reversi [((3,4), Black), ((4,4),
 -- | to play another game, they don't have to quit out and restart with the same options.
 initWorld :: [String] -> World
 initWorld args = (World board Menu oldWorld hints ai difficulty network host
-                  (getHandle host) aiCol userCol args 10.0 Black background)
+                  (getHandle host) aiCol userCol args 10.0 Black background tile)
   where board = initBoard (isReversi args network)
         oldWorld = initWorld args
         hints = hasHints args
@@ -77,23 +78,29 @@ initWorld args = (World board Menu oldWorld hints ai difficulty network host
         userCol = userColour args
         aiCol = opp userCol
         host = hostName args
-        background = getBackground args
+        background = loadBackground args
+        tile = loadTile args
 
-getBackground :: [String] -> Picture
-getBackground args | length args >= 1 && any (isInfixOf "background=") args
-                     = loadBackground name
-                   | otherwise = loadBackground "wood"
-                   where validargs = filter (isInfixOf "background=") args
-                         names = (validargs !! 0 =~ "background=([A-Za-z]*)")
-                         name = names !! 0 !! 1
+loadBackground :: [String] -> Picture
+loadBackground args | length args >= 1 && any (isInfixOf "background=") args
+                      = loadImage ("../textures/background-" ++ name ++ ".png")
+                    | otherwise = loadImage "../textures/background-wood.png"
+                    where validargs = filter (isInfixOf "background=") args
+                          names = (validargs !! 0 =~ "background=([A-Za-z]*)")
+                          name = names !! 0 !! 1
 
-loadBackground :: String -> Picture
-loadBackground bgname = unsafePerformIO $ do
-                                             img <- loadJuicyPNG ("../textures/background-" ++ bgname ++ ".png")
-                                             return (
-                                                    case img of
-                                                        Just pic -> pic
-                                                        Nothing  -> Blank)
+loadTile :: [String] -> Picture
+loadTile args | length args >= 1 && any (== "tile=black") args
+               = loadImage ("../textures/tile-black.png")
+             | otherwise = loadImage "../textures/tile-white.png"
+
+loadImage :: String -> Picture
+loadImage bgname = unsafePerformIO $ do
+                                         img <- loadJuicyPNG bgname
+                                         return (
+                                                case img of
+                                                    Just pic -> pic
+                                                    Nothing  -> Blank)
 
 -- | Attempts to connect to the remote server to play a game over the network.
 getHandle :: String -> IO Handle
